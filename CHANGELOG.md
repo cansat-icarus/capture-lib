@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Add local database (PouchDB over LevelDown) for packet storage and replication.
+- Implement Station, the class to rule them all, literally. The only interaction a wrapper should have is with this class.
 - Implement quasi-binary decoder.
 - Implement Serial, a node-serialport wrapper that allows path changes and keeps track of port state.
 - Implement Parser, a general purpose parser meant to be implemented and fitted to anyone's needs.
