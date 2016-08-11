@@ -6,3 +6,4 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Implement quasi-binary decoder.
+- Implement Parser, a general purpose parser meant to be implemented and fitted to anyone's needs.
