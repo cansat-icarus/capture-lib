@@ -8,3 +8,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Implement quasi-binary decoder.
 - Implement Serial, a node-serialport wrapper that allows path changes and keeps track of port state.
 - Implement Parser, a general purpose parser meant to be implemented and fitted to anyone's needs.
+- Implement IcarusParser, the parser for our team (extends Parser)
+- Add sensor unit conversion
+- Add string tables for raw CanSat values

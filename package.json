@@ -20,6 +20,7 @@
     "coverage": "nyc npm test"
   },
   "dependencies": {
+    "crc": "^3.4.0",
     "object-path": "^0.11.1",
     "serialport": "^4.0.1"
   },
