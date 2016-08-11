@@ -22,7 +22,7 @@
   "dependencies": {
     "crc": "^3.4.0",
     "object-path": "^0.11.1",
-    "pouchdb": "^5.4.5"
+    "pouchdb": "^5.4.5",
     "serialport": "^4.0.1"
   },
   "devDependencies": {
