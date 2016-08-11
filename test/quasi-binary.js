@@ -1,0 +1,53 @@
+import { decode } from '../src/quasi-binary.js'
+import test from 'ava'
+
+function numberArray (min, max) {
+  return [...Array(max + 1 - min).keys()].map(v => Number(v + min))
+}
+
+test('quasi-binary:decodeOneSimple', t => {
+  // Every byte value below 253
+  const values = numberArray(0, 252)
+  for (const value of values) t.true(value === decode([value])[0])
+})
+
+test('quasi-binary:decodeOneComplex', t => {
+  // The special >= 253 cases
+  t.is(decode([253, 0])[0], 253)
+  t.is(decode([253, 1])[0], 254)
+  t.is(decode([253, 2])[0], 255)
+})
+
+test('quasi-binary:decodeMultiple', t => {
+  // Just random things in a random order
+  const decoded = Buffer.from([15, 0, 35, 255, 240, 254, 123, 9, 253, 0, 1])
+  const encoded = [15, 0, 35, 253, 2, 240, 253, 1, 123, 9, 253, 0, 0, 1]
+
+  t.true(decode(encoded).equals(decoded))
+
+  // All values: 0..252, 253, 0, 253, 1, 253, 2 (encoded) or 0..255 (decoded)
+  const decoded2 = Buffer.from(numberArray(0, 255))
+  const encoded2 = numberArray(0, 258)
+  encoded2[254] = 0
+  encoded2[255] = 253
+  encoded2[256] = 1
+  encoded2[257] = 253
+  encoded2[258] = 2
+
+  t.true(decode(encoded2).equals(decoded2))
+})
+
+test('quasi-binary:error:inputOverflow', t => {
+  // Test all overflowing values: 254, 255
+  t.is(decode([254]), 'inputOverflow')
+  t.is(decode([255]), 'inputOverflow')
+})
+
+test('quasi-binary:error:outputOverflow', t => {
+  // Test all overflowing values: 3..255
+  const overflowing = numberArray(3, 255)
+
+  for (const val of overflowing) {
+    t.is(decode([253, val]), 'outputOverflow')
+  }
+})
