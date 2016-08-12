@@ -39,8 +39,8 @@ test('quasi-binary:decodeMultiple', t => {
 
 test('quasi-binary:error:inputOverflow', t => {
   // Test all overflowing values: 254, 255
-  t.is(decode([254]), 'inputOverflow')
-  t.is(decode([255]), 'inputOverflow')
+  t.throws(() => decode([254]), 'inputOverflow')
+  t.throws(() => decode([255]), 'inputOverflow')
 })
 
 test('quasi-binary:error:outputOverflow', t => {
@@ -48,6 +48,6 @@ test('quasi-binary:error:outputOverflow', t => {
   const overflowing = numberArray(3, 255)
 
   for (const val of overflowing) {
-    t.is(decode([253, val]), 'outputOverflow')
+    t.throws(() => decode([253, val]), 'outputOverflow')
   }
 })
