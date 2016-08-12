@@ -83,8 +83,6 @@ export default class IcarusParser extends Parser {
     // Store calculated CRC checksum
     this.packet.crc.calculated = this.crc.toString(16)
 
-    // TODO: packet scores
-
     return this.packet
   }
 }

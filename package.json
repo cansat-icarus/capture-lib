@@ -1,6 +1,6 @@
 {
   "name": "capture-lib",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "main": "dist/index.js",
   "jsnext:main": "src/index.js",
@@ -23,7 +23,8 @@
     "crc": "^3.4.0",
     "object-path": "^0.11.1",
     "pouchdb": "^5.4.5",
-    "serialport": "^4.0.1"
+    "serialport": "^4.0.1",
+    "uuid": "^2.0.2"
   },
   "devDependencies": {
     "ava": "^0.15.2",

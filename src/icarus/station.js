@@ -1,6 +1,7 @@
-import Serial from '../serial'
-import { parser, dataHandler } from './data-handler'
 import PouchDB from 'pouchdb'
+import Serial from '../serial'
+import Classifier from '../classifier'
+import { parser, dataHandler } from './data-handler'
 
 /**
  * Handles everything a Station should.
@@ -8,7 +9,7 @@ import PouchDB from 'pouchdb'
  */
 export default class Station {
   /**
-   * Sets up all relevant class instances (Serial, parsers...).
+   * Sets up all relevant class instances (Serial, parsers...) and events listeners.
    */
   constructor () {
     /**
@@ -20,6 +21,11 @@ export default class Station {
      * {@link Serial} instance with the {@link parser} attached
      */
     this.serial = new Serial(parser())
+
+    /**
+     * {@link Classifier} instance, that holds a reference back to us.
+     */
+    this.classifier = new Classifier()
 
     // Handle incoming packets
     this.serial.on('data', this::dataHandler)
