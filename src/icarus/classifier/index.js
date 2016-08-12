@@ -12,7 +12,6 @@ import packetHeuristicsConfig from './packet-heuristics'
  * each packet score is determined by the racional function 1/2x where x is a
  * positive non-zero integer that represents how recent the packet is (1 being the
  * most recent packet).
- * @emits {stationScore} A new station score was calculated.
  */
 export default class Classifier extends EventEmitter {
   /** @ignore */
@@ -33,6 +32,14 @@ export default class Classifier extends EventEmitter {
     this._lastPacket = Object.create(null)
   }
 
+  /**
+   * Classifies one packet and updates the station score (unless told otherwise).
+   * Packet scores are calculated based on the CRC checksum(60%)
+   * and simple heuristics(min/max value, variation between packets)(40%).
+   * @param {Object} packet The packet to classify.
+   * @param {Boolean} [updateStationClassification=true] Whether to update the station score.
+   * @emits Classifier#stationScore(stationScore) When updateStationClassification is true, the station score is updated and the event is fired.
+   */
   classifyPacket (packet, updateStationClassification = true) {
     let score = 0
 
@@ -71,6 +78,16 @@ export default class Classifier extends EventEmitter {
     return score
   }
 
+  /**
+   * Updates the station score(incrementally).
+   * Station scores are calculated based on the average packet score. The weight of
+   * each packet score is determined by the racional function 1/2x where x is a
+   * positive non-zero integer that represents how recent the packet is (1 being the
+   * most recent packet).
+   * @param {Number} packetScore The score of the previously unnacounted packet.
+   * @returns {Number} New station score.
+   * @emits Classifier#stationScore(stationScore) Because the station score was updated.
+   */
   classifyStationInc (packetScore) {
     if (!this.stationScore) {
       this.stationScore = packetScore

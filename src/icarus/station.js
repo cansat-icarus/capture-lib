@@ -23,7 +23,7 @@ export default class Station {
     this.serial = new Serial(parser())
 
     /**
-     * {@link Classifier} instance, that holds a reference back to us.
+     * {@link Classifier} instance.
      */
     this.classifier = new Classifier()
 
