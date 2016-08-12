@@ -1,4 +1,6 @@
+import { v4 as uuid } from 'uuid'
 import IcarusParser from './parser'
+
 /**
  * 'Transceiver MODE' Buffer for future comparison.
  * Helps ignoring messages from transceiver.
@@ -50,6 +52,19 @@ export function parser () {
  * Should be called bound to a {@link Station}.
  */
 export function dataHandler (packet) {
+  // Properly handle bad packets
+  if (packet.type.length === 1) {
+    // Assign packet score
+    packet.score = this.classifier.classifyPacket(packet)
+  } else {
+    // Bad packets have score 0
+    packet.score = 0
+    this.classifier.classifyStationInc(0)
+
+    // Generate a mostly random id
+    packet._id = `?${packet.receivedAt}-${uuid()}`
+  }
+
   // Save to DB
   this.db.put(packet)
     .then(() => console.log('Packet saved'))
