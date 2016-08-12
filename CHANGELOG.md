@@ -4,6 +4,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.2.1] - 2016-08-12
+### Tested configurations
+None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol is finalized, version 1.* (stable) will not be reached.
+
+### Changed
+- Data handler now makes station emit an event on every packet received.
+- Bugfix: Quasi-binary unit tests now work (quasi-binary:error:* were expecting errors to be returned, not throwed).
+- Bugfix: Classifier#classifyPacket was ignoring the argument updateStationClassification.
+
 ## [v0.2.0] - 2016-08-12
 ### Tested configurations
 None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol is finalized, version 1.* (stable) will not be reached.
@@ -24,6 +33,7 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion
 - Add string tables for raw CanSat values
 
-[Unreleased]: https://github.com/cansat-icarus/cansat/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/cansat-icarus/cansat/compare/v0.2.1...HEAD
+[v0.2.1]: https://github.com/cansat-icarus/cansat/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/cansat-icarus/cansat/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/cansat-icarus/cansat/compare/e73fe964bc6dfae26e1a6bbb03d0565b35a394f9...v0.1.0
