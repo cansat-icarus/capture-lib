@@ -69,4 +69,7 @@ export function dataHandler (packet) {
   this.db.put(packet)
     .then(() => console.log('Packet saved'))
     .catch(err => console.error(err))
+
+  // Alert UI through station
+  this.emit('packet', packet)
 }
