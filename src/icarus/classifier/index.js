@@ -70,7 +70,7 @@ export default class Classifier extends EventEmitter {
     if (packet.crc.sent === packet.crc.calculated) score += 60
 
     // Update station classification
-    this.classifyStationInc(score)
+    if (updateStationClassification) this.classifyStationInc(score)
 
     // Update _lastData with the current packet fields
     Object.assign(this._lastData, packet)
