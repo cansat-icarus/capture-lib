@@ -13,6 +13,8 @@ export default class Station extends EventEmitter {
    * Sets up all relevant class instances (Serial, parsers...) and events listeners.
    */
   constructor () {
+    super()
+
     /**
      * Database instance, internal to the station.
      */
