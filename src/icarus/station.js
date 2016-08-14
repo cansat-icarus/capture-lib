@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import PouchDB from 'pouchdb'
 import Serial from '../serial'
-import Classifier from '../classifier'
+import Classifier from './classifier'
 import { parser, dataHandler } from './data-handler'
 
 /**
