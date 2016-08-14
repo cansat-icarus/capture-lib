@@ -20,7 +20,7 @@ export default class Classifier extends EventEmitter {
 
     /**
      * The station score.
-     * @type {Number}
+     * @type {!Number}
      */
     this.stationScore = undefined
 
@@ -29,7 +29,7 @@ export default class Classifier extends EventEmitter {
      * Used for heuristic algorithms.
      * @type {Object}
      */
-    this._lastPacket = Object.create(null)
+    this._lastData = Object.create(null)
   }
 
   /**
@@ -51,10 +51,10 @@ export default class Classifier extends EventEmitter {
         const val = get(packet, field)
 
         // When there is no value, the field does not exist => wrong kind of packet.
-        if (!val) continue
+        if (val === undefined) continue
 
         // Get last values
-        const lastVal = get(this._lastValues, field, val)
+        const lastVal = get(this._lastData, field, val)
 
         for (const heuristic of heuristics) {
           heuristicCount++
@@ -66,8 +66,16 @@ export default class Classifier extends EventEmitter {
     // Bump score to a 0-40 range
     score *= 40 / heuristicCount
 
-    // The CRC accounts for 60% of the score
-    if (packet.crc.sent === packet.crc.calculated) score += 60
+    // The CRC accounts for 60% of the score, unless there are no heuristics
+    if (packet.crc.sent === packet.crc.local) {
+      if (score === Infinity || score === -Infinity || isNaN(score)) {
+        score = 100
+      } else {
+        score += 60
+      }
+    } else {
+      if (score === Infinity || score === -Infinity || isNaN(score)) score = 0
+    }
 
     // Update station classification
     if (updateStationClassification) this.classifyStationInc(score)
@@ -89,7 +97,7 @@ export default class Classifier extends EventEmitter {
    * @emits Classifier#stationScore(stationScore) Because the station score was updated.
    */
   classifyStationInc (packetScore) {
-    if (!this.stationScore) {
+    if (this.stationScore === undefined) {
       this.stationScore = packetScore
     } else {
       this.stationScore += packetScore

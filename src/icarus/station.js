@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import PouchDB from 'pouchdb'
 import Serial from '../serial'
-import Classifier from '../classifier'
+import Classifier from './classifier'
 import { parser, dataHandler } from './data-handler'
 
 /**
@@ -13,6 +13,8 @@ export default class Station extends EventEmitter {
    * Sets up all relevant class instances (Serial, parsers...) and events listeners.
    */
   constructor () {
+    super()
+
     /**
      * Database instance, internal to the station.
      */

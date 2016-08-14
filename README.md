@@ -5,8 +5,27 @@
 [![Standard][standard-image]][standard-url]
 > Does anything the groundstation can! To use it in a real world scenario wrap it for a specific platform/use case or use a pre-built wrapper.
 
-<!-- START doctoc -->
-<!-- END doctoc -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Installation](#installation)
+- [Building, testing and all the workflow things](#building-testing-and-all-the-workflow-things)
+- [Features](#features)
+- [Included components](#included-components)
+  - [Serial](#serial)
+  - [Quasi-binary decoder](#quasi-binary-decoder)
+  - [Parser](#parser)
+  - [Classifier](#classifier)
+  - [SerialHandler](#serialhandler)
+  - [Backend](#backend)
+  - [Station](#station)
+  - [DB](#db)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Installation
 

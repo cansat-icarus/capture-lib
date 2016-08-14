@@ -1,6 +1,6 @@
 {
   "name": "capture-lib",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "main": "dist/index.js",
   "jsnext:main": "src/index.js",
@@ -15,8 +15,8 @@
     "build": "babel src --out-dir dist",
     "build:watch": "npm run build -- --watch",
     "docs": "esdoc -c esdoc.json",
-    "test": "ava",
-    "test:watch": "npm test -- --watch",
+    "test": "BABEL_ENV=test ava",
+    "test:watch": "npm run test -- --watch",
     "coverage": "nyc npm test"
   },
   "dependencies": {
@@ -31,6 +31,7 @@
     "babel-cli": "6.6.5",
     "babel-eslint": "^6.1.2",
     "babel-plugin-add-module-exports": "^0.2.0",
+    "babel-plugin-rewire": "^1.0.0-rc-5",
     "babel-plugin-transform-exponentiation-operator": "^6.8.0",
     "babel-plugin-transform-export-extensions": "^6.8.0",
     "babel-plugin-transform-function-bind": "^6.8.0",
@@ -40,6 +41,7 @@
     "esdoc": "^0.4.7",
     "esdoc-es7-plugin": "0.0.3",
     "esdoc-plugin-enhanced-navigation": "^0.1.1",
+    "memdown": "^1.2.0",
     "mkdirp": "^0.5.1",
     "nyc": "^7.1.0",
     "rimraf": "^2.5.4",
@@ -48,7 +50,21 @@
   "ava": {
     "require": [
       "babel-register"
-    ]
+    ],
+    "babel": {
+      "babelrc": false,
+      "presets": [
+        "features"
+      ],
+      "plugins": [
+        "add-module-exports",
+        "transform-exponentiation-operator",
+        "transform-export-extensions",
+        "transform-function-bind",
+        "transform-object-rest-spread"
+      ],
+      "sourceMaps": true
+    }
   },
   "babel": {
     "presets": [
@@ -61,7 +77,14 @@
       "transform-function-bind",
       "transform-object-rest-spread"
     ],
-    "sourceMaps": true
+    "env": {
+      "test": {
+        "plugins": [
+          "rewire"
+        ],
+        "sourceMaps": true
+      }
+    }
   },
   "standard": {
     "parser": "babel-eslint"
