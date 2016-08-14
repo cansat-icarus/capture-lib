@@ -4,6 +4,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.0] - 2016-08-14
+### Tested configurations
+None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until test protocol is finalized, version 1.* (stable) will not be reached. Unit tests are setup and passing.
+
+### Added
+- Unit tests for everything implemented (except for the quasi-binary decoder, those already existed)
+
+### Changes
+Too many to list, all untracked so far. Until v1.* arrives, breaking changes may go undocumented.
+If for some (probably bad) reason you're using sub-v1 versions, check the few commits that took place between v0.2.1 and v0.3.
+
 ## [v0.2.1] - 2016-08-12
 ### Tested configurations
 None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol is finalized, version 1.* (stable) will not be reached.
@@ -33,7 +44,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion
 - Add string tables for raw CanSat values
 
-[Unreleased]: https://github.com/cansat-icarus/cansat/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/cansat-icarus/cansat/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/cansat-icarus/cansat/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/cansat-icarus/cansat/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/cansat-icarus/cansat/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/cansat-icarus/cansat/compare/e73fe964bc6dfae26e1a6bbb03d0565b35a394f9...v0.1.0
