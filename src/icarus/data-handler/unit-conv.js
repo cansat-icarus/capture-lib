@@ -4,7 +4,7 @@
  * @return {Number} ºC temperature.
  */
 export function DS18B20 (raw) {
-  return raw * 0.0078125 // TODO: confirm value
+  return raw / 128 // TODO: confirm value
 }
 
 /**

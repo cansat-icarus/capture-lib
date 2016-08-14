@@ -17,27 +17,37 @@ export default class IcarusParser extends Parser {
    * @returns {Object} Parsed packet.
    */
   parse (rawPacket) {
-    // Save receival time
-    this.packet.receivedAt = Date.now()
-
-    // Save raw packet (encoded version)
-    this.packet.raw = rawPacket
-
     // Decode packet
     try {
       /** @ignore */
       this._raw = decode(rawPacket)
+
+      // Parser needs to cleanup some things
+      super.parse(this._raw)
     } catch (e) {
       // When we can't decode it, we can't continue
       this.packet.error = e.message
-      return this.packet
+
+      this.packet.type = '?[decode error]'
     }
 
-    // Parser needs to cleanup some things
-    super.parse(this._raw)
+    // Save receival time
+    this.packet.receivedAt = Date.now()
+
+    // Save raw packet (encoded version)
+    this.packet.raw = rawPacket.toJSON().data
+
+    // Handle badly encoded packets
+    if (this.packet.error) return this.packet
 
     // Get packet type identifier
     this.readChar('type')
+
+    // Handle unknown packets
+    if (this.packet.type !== 't' && this.packet.type !== 'i' && this.packet.type !== 's') {
+      this.packet.type = `?[0x${this.packet.type.charCodeAt(0).toString(16)}]`
+      return this.packet
+    }
 
     // Now the packet counter, timestamps and alike
     this.readUInt('counter', 4)
@@ -59,29 +69,20 @@ export default class IcarusParser extends Parser {
         break
       case 'i':
         // Message code and interpretation
-        this.readUInt('msg.code')
-        this.packet.msg.text = messages[this.packet.msg.code] || 'Unknown message'
+        this.readUInt('message.id')
+        this.setValue('message.text', messages[this.packet.message.id] || 'Unknown message')
         break
       case 's':
         // Module information
-        this.readUInt('module.index')
-        this.readUInt('module.enabled', 1, val => !!val) // Boolean conversion
+        this.readUInt('module.id')
+        this.readBoolean('module.enabled')
         this.readUInt('module.interval', 4)
         this.readUInt('module.lastRun', 4)
 
         // Get module name
-        this.packet.module.name = moduleNames[this.packet.module.index] || 'Unknown module'
-        break
-      default:
-        this.packet.type = `[0x${this.packet.type.charCodeAt(0).toString(16)}]???`
+        this.setValue('module.name', moduleNames[this.packet.module.id] || 'Unknown module')
         break
     }
-
-    // Get sent CRC32 checksum
-    this.readUInt('crc.sent', 2, val => val.toString(16), false)
-
-    // Store calculated CRC checksum
-    this.packet.crc.calculated = this.crc.toString(16)
 
     return this.packet
   }
