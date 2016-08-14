@@ -142,7 +142,7 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {Boolean} The read boolean.
    */
-  readBoolean (key, converter, crc) {
+  readBoolean (key, converter) {
     return this.setValue(key, !!this._raw[this._i++], converter)
   }
 }
