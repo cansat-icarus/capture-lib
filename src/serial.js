@@ -182,3 +182,30 @@ export default class Serial extends EventEmitter {
     this.emit('stateChange', state)
   }
 }
+
+/**
+ * Lists available ports in the system with SerialPort.list.
+ * Tries to fill out vendorId and productId fields in Windows from pnpId.
+ * @return {Promise<Array>} Array of port information objects.
+ */
+export function listPorts () {
+  return new Promise((resolve, reject) => {
+    SerialPort.list((err, ports) => {
+      if (err) {
+        return resolve([])
+      }
+
+      // Fill out some missing fields if possible
+      ports = ports.map(port => {
+        if ((!port.vendorId || !port.productId) && port.pnpId) {
+          port.vendorId = '0x' + /VID_([0-9,A-Z]*)&/.exec(port.pnpId)[1].toLowerCase()
+          port.productId = '0x' + /PID_([0-9,A-Z]*)&/.exec(port.pnpId)[1].toLowerCase()
+        }
+
+        return port
+      })
+
+      resolve(ports)
+    })
+  })
+}

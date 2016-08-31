@@ -1,5 +1,5 @@
 import test from 'ava'
-import Serial from '../src/serial'
+import { default as Serial, listPorts, __Rewire__, __ResetDependency__ } from '../src/serial'
 
 const dummyParser = (emitter, buf) => emitter.emit('data', buf)
 
@@ -244,4 +244,36 @@ test.cb('detects state change: disconnect', t => {
 
   // Now run the state test
   stateTest('disconnect', 'close')(t)
+})
+
+test.serial('lists available ports', t => {
+  const samplePorts = [
+    {
+      comName: '/dev/tty.usbX',
+      vendorId: '0x1234',
+      productId: '0x5678'
+    },
+    {
+      comName: '/dev/ttyUSBX',
+      vendorId: '0x03eb',
+      productId: '0x2404'
+    },
+    {
+      comName: 'COM42',
+      pnpId: 'USB\\VID_ABCD&PID_EF90&ImWindowsAndIApparentlyCantGiveProperInformation'
+    }
+  ]
+  __Rewire__('SerialPort', {
+    list: cb => cb(null, samplePorts)
+  })
+
+  return listPorts()
+    .then(ports => {
+      t.is(ports[0], samplePorts[0])
+      t.is(ports[1], samplePorts[1])
+      t.is(ports[2].vendorId, '0xabcd')
+      t.is(ports[2].productId, '0xef90')
+
+      __ResetDependency__('SerialPort')
+    })
 })
