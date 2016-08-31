@@ -15,9 +15,9 @@
     "build": "babel src --out-dir dist",
     "build:watch": "npm run build -- --watch",
     "docs": "esdoc -c esdoc.json",
-    "test": "BABEL_ENV=test ava",
-    "test:watch": "npm run test -- --watch",
-    "coverage": "nyc npm test"
+    "test": "npm run lint && npm run coverage",
+    "test:watch": "nodemon --watch src --watch test node_modules/.bin/standard & BABEL_ENV=test ava --watch",
+    "coverage": "BABEL_ENV=test nyc ava"
   },
   "dependencies": {
     "babel-runtime": "^6.11.6",
@@ -26,6 +26,7 @@
     "object-path": "^0.11.1",
     "pouchdb": "^5.4.5",
     "serialport": "^4.0.1",
+    "socket.io-client": "^1.4.8",
     "uuid": "^2.0.2"
   },
   "devDependencies": {
@@ -46,6 +47,7 @@
     "esdoc-plugin-enhanced-navigation": "^0.1.1",
     "memdown": "^1.2.0",
     "mkdirp": "^0.5.1",
+    "nodemon": "^1.10.2",
     "nyc": "^7.1.0",
     "rimraf": "^2.5.4",
     "standard": "^7.1.2"
