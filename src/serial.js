@@ -39,17 +39,17 @@ export default class Serial extends EventEmitter {
     this._path = undefined
 
     /**
-     * Holds current state. Possible values: disconnected, open, closed, disconnected_forced.
+     * Holds current state. Possible values: disconnect, open, close, disconnect_force.
      * @type {String}
      */
-    this._state = 'disconnected'
+    this._state = 'close'
   }
 
   /**
    * Sets a new path to all future serialport instances. If a port is already open,
    * it is automatically closed and a new one is opened with the new path (keeps event listeners).
    * @emits Serial#data(packet) New data arrived (after being parsed by {@link Serial#_parser}).
-   * @emits Serial#stateChanged(state) {@link Serial#_state} has changed.
+   * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise} When path is changed and the port recreated/reopened.
    */
@@ -73,7 +73,7 @@ export default class Serial extends EventEmitter {
   /**
    * Opens the serialport, creating it if needed.
    * @emits Serial#data(packet) New data arrived (after being parsed by {@link Serial#_parser}).
-   * @emits Serial#stateChanged(state) {@link Serial#_state} has changed.
+   * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise} Resolved when the serial port is open.
    */
@@ -96,7 +96,7 @@ export default class Serial extends EventEmitter {
 
   /**
    * Closes the serialport.
-   * @emits Serial#stateChanged(state) {@link Serial#_state} has changed.
+   * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise<!Error>} Resolved when the serialport is closed.
    */
@@ -110,7 +110,7 @@ export default class Serial extends EventEmitter {
   /**
    * Destroys the current serialport instance. Removing all listeners and closing it beforehand.
    * @protected
-   * @emits Serial#stateChanged(state) {@link Serial#_state} has changed.
+   * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @returns {Promise<!Error>} Resolves when all is done.
    */
@@ -139,7 +139,7 @@ export default class Serial extends EventEmitter {
    * that forward data and errors and keep track of state.
    * @protected
    * @emits Serial#data(packet) New data arrived (after being parsed by {@link Serial#_parser}).
-   * @emits Serial#stateChanged(state) {@link Serial#_state} has changed.
+   * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise} A resolved Promise for easy chaining in {@link Serial#setPath}.
    */
@@ -160,10 +160,10 @@ export default class Serial extends EventEmitter {
 
     // State tracking
     this._port.on('open', () => this._updateState('open'))
-    this._port.on('disconnect', () => this._updateState('disconnect_forced'))
+    this._port.on('disconnect', () => this._updateState('disconnect_force'))
     this._port.on('close', () => {
       // Detect safe disconnections
-      if (this._state === 'disconnect_forced') return this._updateState('disconnect')
+      if (this._state === 'disconnect_force') return this._updateState('disconnect')
       this._updateState('close')
     })
 
@@ -175,7 +175,7 @@ export default class Serial extends EventEmitter {
    * a stateChange event with one call.
    * @protected
    * @param {String} state New state.
-   * @emits Serial#stateChanged(state) {@link Serial#_state} has changed.
+   * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    */
   _updateState (state) {
     this._state = state

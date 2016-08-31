@@ -30,7 +30,7 @@ test.beforeEach(t => {
 test('constructor()', t => {
   t.is(t.context.serial._baud, 19200)
   t.is(t.context.serial._parser, dummyParser)
-  t.is(t.context.serial._state, 'disconnected')
+  t.is(t.context.serial._state, 'close')
 
   const serial = new Serial(dummyParser, 9600)
   t.true(!serial._port)
@@ -234,13 +234,13 @@ test.cb('emits #error, when an error ocurrs', emitTest('error'))
 
 test.cb('detects state change: open', stateTest('open'))
 
-test.cb('detects state change: disconnect_forced', stateTest('disconnect_forced', 'disconnect'))
+test.cb('detects state change: disconnect_forced', stateTest('disconnect_force', 'disconnect'))
 
 test.cb('detects state change: close', stateTest('close'))
 
 test.cb('detects state change: disconnect', t => {
   // State disconnect may only happen after state disconnect_forced
-  t.context.serial._state = 'disconnect_forced'
+  t.context.serial._state = 'disconnect_force'
 
   // Now run the state test
   stateTest('disconnect', 'close')(t)
