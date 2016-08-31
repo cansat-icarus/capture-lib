@@ -1,9 +1,10 @@
-import { EventEmitter } from 'events'
 import PouchDB from 'pouchdb'
-import { default as Serial, listPorts } from '../serial'
-import Classifier from './classifier'
-import { parser, dataHandler } from './data-handler'
+import { EventEmitter } from 'events'
+
 import createLogger from './log'
+import Classifier from './classifier'
+import { default as Serial, listPorts } from '../serial'
+import { parser, dataHandler } from './data-handler'
 
 // T-Minus Transceiver information
 /** T-Minus Transceiver Vendor ID */
@@ -19,7 +20,7 @@ export default class Station extends EventEmitter {
   /**
    * Sets up all relevant class instances (Serial, parsers...) and events listeners.
    */
-  constructor (name) {
+  constructor(name) {
     super()
 
     /**
@@ -54,7 +55,6 @@ export default class Station extends EventEmitter {
     this.classifier = new Classifier(this._log.child({ childId: 'station.classifier' }))
 
     /**
-     * {@link Backend} instance.
      */
     this.backend = new Backend(this._log.child({ childId: 'station.backend' }), this)
 
@@ -70,19 +70,19 @@ export default class Station extends EventEmitter {
    * them with recommended ones first.
    * @return {Promise<Array>} List of serialports.
    */
-  getAvailablePorts () {
+  getAvailablePorts() {
     this._log.info('station.getAvailablePorts')
     return listPorts()
       .then(list => {
         list = list.map(port => {
-          if (port.vendorId === tMinusVid && port.productId === tMinusPid) port.recommend = true
+          if(port.vendorId === tMinusVid && port.productId === tMinusPid) port.recommend = true
           return port
         })
 
         list = list.sort((p1, p2) => {
           // Recommended come first
-          if (p1.recommend && !p2.recommend) return -1
-          if (p2.recommend && !p1.recommend) return 1
+          if(p1.recommend && !p2.recommend) return -1
+          if(p2.recommend && !p1.recommend) return 1
 
           // Otherwise, default to alphabetical sorting
           return p1.comName.localeCompare(p2.comName)

@@ -1,14 +1,15 @@
-import test from 'ava'
-import Station from '../../src/icarus/station'
-import PouchDB from 'pouchdb'
 import memdown from 'memdown'
-import Serial from '../../src/serial'
-import Classifier from '../../src/icarus/classifier'
+import test from 'ava'
+import PouchDB from 'pouchdb'
+
 import fakeLogger from '../helpers/fakelog'
+import Classifier from '../../src/icarus/classifier'
+import Serial from '../../src/serial'
+import Station from '../../src/icarus/station'
 
 // Avoid polluting test with PouchDB things
 class MemDB extends PouchDB {
-  constructor (path, options = {}) {
+  constructor(path, options = {}) {
     super(path, Object.assign(options, { db: memdown }))
   }
 }
@@ -27,6 +28,7 @@ test('constructs', t => {
   t.true(station.classifier instanceof Classifier)
   t.true(station.serial instanceof Serial)
   t.true(station.db instanceof PouchDB)
+  t.true(station.logDb instanceof PouchDB)
   t.is(station.serial._parser, parser)
   t.is(station.name, 'the name')
 

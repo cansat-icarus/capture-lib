@@ -1,17 +1,18 @@
 import test from 'ava'
-import { default as Serial, listPorts, __Rewire__, __ResetDependency__ } from '../src/serial'
+
 import fakeLogger from './helpers/fakelog'
+import { default as Serial, listPorts, __Rewire__, __ResetDependency__ } from '../src/serial'
 
 const dummyParser = (emitter, buf) => emitter.emit('data', buf)
 
-function emitTest (event) {
+function emitTest(event) {
   return t => {
     t.context.serial.on(event, ::t.end)
     t.context.serial._port.emit(event)
   }
 }
 
-function stateTest (state, event = state) {
+function stateTest(state, event = state) {
   return t => {
     t.context.serial.on('stateChange', newState => {
       t.is(newState, state)
@@ -82,7 +83,7 @@ test('open() creates the port if it does not exist', t => {
   let createPortCalled = false
   t.context.serial._createPort = () => {
     createPortCalled = true
-    t.context.serial._port = { isOpen: () => false, open: (cb) => cb() }
+    t.context.serial._port = { isOpen: () => false, open: cb => cb() }
     return Promise.resolve()
   }
 
@@ -96,8 +97,10 @@ test('open() opens the port when it is closed', t => {
   let portOpenCalled = false
   t.context.serial._port = {
     _open: true,
-    isOpen () { return this._open },
-    open: (cb) => {
+    isOpen() {
+      return this._open
+    },
+    open: cb => {
       portOpenCalled = true
       return cb()
     }
@@ -127,8 +130,10 @@ test('close() closes the port when it is open', t => {
       // Now create a fake, closed port
       t.context.serial._port = {
         _open: false,
-        isOpen () { return this._open },
-        close (cb) {
+        isOpen() {
+          return this._open
+        },
+        close(cb) {
           portCloseCalled = true
           return cb()
         }
@@ -147,20 +152,6 @@ test('close() closes the port when it is open', t => {
       return t.context.serial.close()
     })
     .then(() => t.is(portCloseCalled, true))
-})
-
-test('_destroyPort() removes all listeners', t => {
-  let removeAllListenersCalled = false
-
-  // Inject removeAllListeners watcher in serial._port
-  const oldRemoveAllListeners = t.context.serial._port.removeAllListeners
-  t.context.serial._port.removeAllListeners = () => {
-    removeAllListenersCalled = true
-    return oldRemoveAllListeners.call(t.context.serial._port)
-  }
-
-  return t.context.serial._destroyPort()
-    .then(() => t.is(removeAllListenersCalled, true))
 })
 
 test('_destroyPort() removes all listeners', t => {

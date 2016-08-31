@@ -12,7 +12,7 @@ export default class Parser {
   /**
    * @param {String} [endianess='LE'] Set byte-order to big endian (BE) or little endian (LE).
    */
-  constructor (endianess = 'LE') {
+  constructor(endianess = 'LE') {
     /**
      * Current packet being parsed.
      * @type {!Object}
@@ -52,7 +52,7 @@ export default class Parser {
    * @param {Buffer} rawPacket The packet to be parsed.
    * @return {Object} The parsed object.
    */
-  parse (rawPacket) {
+  parse(rawPacket) {
     // Change the current packet
     this._raw = rawPacket.slice(0, rawPacket.length - 4)
 
@@ -76,7 +76,7 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {mixed} The provided value (val).
    */
-  setValue (key, val, converter = v => v) {
+  setValue(key, val, converter = v => v) {
     // Set the value in this.packet.[key]
     objPathSet(this.packet, key, converter(val))
     return val
@@ -89,9 +89,9 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {Number} The read integer.
    */
-  readInt (key, size = 1, converter) {
+  readInt(key, size = 1, converter) {
     // Get the value and update the index
-    let val = this._raw[`readInt${this.endianess}`](this._i, size)
+    const val = this._raw[`readInt${this.endianess}`](this._i, size)
     this._i += size
 
     return this.setValue(key, val, converter)
@@ -104,9 +104,9 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {Number} The read integer.
    */
-  readUInt (key, size = 1, converter) {
+  readUInt(key, size = 1, converter) {
     // Get the value and update the index
-    let val = this._raw[`readUInt${this.endianess}`](this._i, size)
+    const val = this._raw[`readUInt${this.endianess}`](this._i, size)
     this._i += size
 
     return this.setValue(key, val, converter)
@@ -118,9 +118,9 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {Number} The read float.
    */
-  readFloat (key, converter) {
+  readFloat(key, converter) {
     // Get the value and update the index
-    let val = this._raw[`readFloat${this.endianess}`](this._i)
+    const val = this._raw[`readFloat${this.endianess}`](this._i)
     this._i += 4
 
     return this.setValue(key, val, converter)
@@ -132,7 +132,7 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {String} The read char.
    */
-  readChar (key, converter) {
+  readChar(key, converter) {
     return this.setValue(key, String.fromCharCode(this._raw[this._i++]), converter)
   }
 
@@ -142,7 +142,7 @@ export default class Parser {
    * @param {Function} [converter=identity] A function that converts the value.
    * @return {Boolean} The read boolean.
    */
-  readBoolean (key, converter) {
+  readBoolean(key, converter) {
     return this.setValue(key, !!this._raw[this._i++], converter)
   }
 }

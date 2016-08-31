@@ -11,7 +11,7 @@ export default class Serial extends EventEmitter {
    * @param {Function} [parser=raw] A node-serialport parser.
    * @param {Number} [baud=19200] Desired baud rate.
    */
-  constructor (logger, parser, baud = 19200) {
+  constructor(logger, parser, baud = 19200) {
     super()
 
     /**
@@ -59,10 +59,10 @@ export default class Serial extends EventEmitter {
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise} When path is changed and the port recreated/reopened.
    */
-  setPath (path) {
+  setPath(path) {
     this._log.debug('serial.setPath')
     // Guard for already changed port...
-    if (path === this._path) {
+    if(path === this._path) {
       this._log.trace('serial._path needs no change', path)
       return Promise.resolve()
     }
@@ -73,9 +73,9 @@ export default class Serial extends EventEmitter {
       this._path = path
 
       // Destroy and recreate _port when necessary
-      if (this._port) {
+      if(this._port) {
         this._log.trace('serial._path changed: recreating existing port')
-        let open = this._port.isOpen()
+        const open = this._port.isOpen()
         this._destroyPort()
           .then(() => open ? this.open() : this._createPort())
           .then(resolve)
@@ -92,11 +92,11 @@ export default class Serial extends EventEmitter {
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise} Resolved when the serial port is open.
    */
-  open () {
+  open() {
     this._log.debug('serial.open')
     return new Promise(resolve => {
      // No port? Create it!
-      if (!this._port) {
+      if(!this._port) {
         this._log.trace('port does not exist')
         return this._createPort()
           .then(() => this.open())
@@ -104,7 +104,7 @@ export default class Serial extends EventEmitter {
       }
 
       // Already open = nothing to do
-      if (this._port.isOpen()) {
+      if(this._port.isOpen()) {
         this._log.trace('port already open')
         return resolve()
       }
@@ -121,10 +121,10 @@ export default class Serial extends EventEmitter {
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise<!Error>} Resolved when the serialport is closed.
    */
-  close () {
+  close() {
     this._log.debug('serial.close')
     // Already closed/no port = nothing to do
-    if (!this._port || !this._port.isOpen()) {
+    if(!this._port || !this._port.isOpen()) {
       this._log.trace('port already closed/does not exist')
       return Promise.resolve()
     }
@@ -140,13 +140,13 @@ export default class Serial extends EventEmitter {
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @returns {Promise<!Error>} Resolves when all is done.
    */
-  _destroyPort () {
+  _destroyPort() {
     this._log.debug('serial._destroyPort')
     return new Promise(resolve => {
       this._port.removeAllListeners()
 
       // Only close if necessary
-      if (!this._port.isOpen()) {
+      if(!this._port.isOpen()) {
         this._log.trace('port not open, removing it')
         this._port = undefined
         return resolve()
@@ -154,9 +154,7 @@ export default class Serial extends EventEmitter {
 
       this._log.trace('port open, closing')
       this._port.close(error => {
-        if (error) {
-          this._log.error('Error closing port!', error)
-        }
+        if(error) this._log.error('Error closing port!', error)
 
         // Must keep going
         this._port = undefined
@@ -174,9 +172,9 @@ export default class Serial extends EventEmitter {
    * @emits Serial#error(error) An error ocurred in node-serialport.
    * @return {Promise} A resolved Promise for easy chaining in {@link Serial#setPath}.
    */
-  _createPort () {
+  _createPort() {
     // Only create if it does not exist
-    if (this._port) return Promise.resolve()
+    if(this._port) return Promise.resolve()
 
     // Create serialport instance
     this._port = new SerialPort(this._path, {
@@ -197,7 +195,7 @@ export default class Serial extends EventEmitter {
     this._port.on('disconnect', () => this._updateState('disconnect_force'))
     this._port.on('close', () => {
       // Detect safe disconnections
-      if (this._state === 'disconnect_force') return this._updateState('disconnect')
+      if(this._state === 'disconnect_force') return this._updateState('disconnect')
       this._updateState('close')
     })
 
@@ -211,7 +209,7 @@ export default class Serial extends EventEmitter {
    * @param {String} state New state.
    * @emits Serial#stateChange(state) {@link Serial#_state} has changed.
    */
-  _updateState (state) {
+  _updateState(state) {
     this._state = state
     this.emit('stateChange', state)
   }
@@ -222,17 +220,17 @@ export default class Serial extends EventEmitter {
  * Tries to fill out vendorId and productId fields in Windows from pnpId.
  * @return {Promise<Array>} Array of port information objects.
  */
-export function listPorts () {
-  return new Promise((resolve, reject) => {
+export function listPorts() {
+  return new Promise(resolve => {
     SerialPort.list((err, ports) => {
-      if (err) {
+      if(err) {
         this._log.fatal(err, { ports })
         return resolve([])
       }
 
       // Fill out some missing fields if possible
       ports = ports.map(port => {
-        if ((!port.vendorId || !port.productId) && port.pnpId) {
+        if((!port.vendorId || !port.productId) && port.pnpId) {
           port.vendorId = '0x' + /VID_([0-9,A-Z]*)&/.exec(port.pnpId)[1].toLowerCase()
           port.productId = '0x' + /PID_([0-9,A-Z]*)&/.exec(port.pnpId)[1].toLowerCase()
         }

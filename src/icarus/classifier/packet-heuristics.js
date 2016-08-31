@@ -6,7 +6,7 @@
  * @returns {Function} The heuristic function.
  * @private
  */
-function minmaxH (min, max) {
+function minmaxH(min, max) {
   return val => val >= min && val <= max
 }
 
@@ -17,7 +17,7 @@ function minmaxH (min, max) {
  * @returns {Function} The heuristic function.
  * @private
  */
-function variationH (variation) {
+function variationH(variation) {
   return (val, lastVal) => Math.abs(val - lastVal) <= variation
 }
 

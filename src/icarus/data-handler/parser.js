@@ -1,6 +1,7 @@
+import * as conv from './unit-conv'
+
 import Parser from '../../parser'
 import { decode } from '../../quasi-binary'
-import * as conv from './unit-conv'
 import { messages, moduleNames } from './cansat-strings'
 
 /**
@@ -16,7 +17,7 @@ export default class IcarusParser extends Parser {
    * @param {Buffer} rawPacket Packet to parse.
    * @returns {Object} Parsed packet.
    */
-  parse (rawPacket) {
+  parse(rawPacket) {
     // Decode packet
     try {
       /** @ignore */
@@ -24,9 +25,9 @@ export default class IcarusParser extends Parser {
 
       // Parser needs to cleanup some things
       super.parse(this._raw)
-    } catch (e) {
+    } catch(err) {
       // When we can't decode it, we can't continue
-      this.packet.error = e.message
+      this.packet.error = err.message
 
       this.packet.type = '?[decode error]'
     }
@@ -38,26 +39,23 @@ export default class IcarusParser extends Parser {
     this.packet.raw = rawPacket.toJSON().data
 
     // Handle badly encoded packets
-    if (this.packet.error) return this.packet
+    if(this.packet.error) return this.packet
 
     // Get packet type identifier
     this.readChar('type')
 
-    // Handle unknown packets
-    if (this.packet.type !== 't' && this.packet.type !== 'i' && this.packet.type !== 's') {
-      this.packet.type = `?[0x${this.packet.type.charCodeAt(0).toString(16)}]`
-      return this.packet
+    // Only handle known packets
+    if(this.packet.type === 't' || this.packet.type === 'i' || this.packet.type === 's') {
+      // Now the packet counter, timestamps and alike
+      this.readUInt('counter', 4)
+      this.readUInt('sentAt.millis', 4)
+      // this.readUInt('sentAt.unix', 4) // Not yet as of now
+
+      // Generate the packet ID
+      this.packet._id = this.packet.counter
     }
 
-    // Now the packet counter, timestamps and alike
-    this.readUInt('counter', 4)
-    this.readUInt('sentAt.millis', 4)
-    // this.readUInt('sentAt.unix', 4) // Not yet as of now
-
-    // Generate the packet ID
-    this.packet._id = this.packet.counter
-
-    switch (this.packet.type) {
+    switch(this.packet.type) {
       case 't':
         // 2x DS18B20 temperature sensors
         this.readInt('temp.0', 2, conv.DS18B20)
@@ -81,6 +79,9 @@ export default class IcarusParser extends Parser {
 
         // Get module name
         this.setValue('module.name', moduleNames[this.packet.module.id] || 'Unknown module')
+        break
+      default:
+        this.packet.type = `?[0x${this.packet.type.charCodeAt(0).toString(16)}]`
         break
     }
 

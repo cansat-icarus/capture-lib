@@ -1,14 +1,15 @@
-import heuristicsConfig from '../../src/icarus/classifier/packet-heuristics'
 import test from 'ava'
+
+import heuristicsConfig from '../../src/icarus/classifier/packet-heuristics'
 
 test('exports proper heuristics', t => {
   // Only way to do it without rewire getting in the way
   t.is(Object.prototype.toString.call(heuristicsConfig), '[object Map]')
 
   // Heuristic linter
-  for (const [fields, heuristics] of heuristicsConfig) {
-    for (const field of fields) t.is(typeof field, 'string')
-    for (const heuristic of heuristics) t.is(typeof heuristic, 'function')
+  for(const [fields, heuristics] of heuristicsConfig) {
+    for(const field of fields) t.is(typeof field, 'string')
+    for(const heuristic of heuristics) t.is(typeof heuristic, 'function')
   }
 })
 

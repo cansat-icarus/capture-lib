@@ -1,12 +1,12 @@
 import { default as bunyan, RingBuffer } from 'bunyan'
 
-function getBunyanDBStream (db) {
+function getBunyanDBStream(db) {
   const buffer = new RingBuffer({ limit: 50 })
 
   return [buffer, {
     write: obj => {
       // error and fatal want more information
-      if (obj.level > 45) obj._context = buffer.records
+      if(obj.level > 45) obj._context = buffer.records
 
       // save to db
       db.post(obj)
@@ -14,7 +14,7 @@ function getBunyanDBStream (db) {
   }]
 }
 
-export default function createLogger (name, db) {
+export default function createLogger(name, db) {
   const [bufferStream, dbStream] = getBunyanDBStream(db)
 
   return bunyan.createLogger({

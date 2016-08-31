@@ -1,14 +1,15 @@
-import { decode } from '../src/quasi-binary.js'
 import test from 'ava'
 
-function numberArray (min, max) {
+import { decode } from '../src/quasi-binary.js'
+
+function numberArray(min, max) {
   return [...Array(max + 1 - min).keys()].map(v => Number(v + min))
 }
 
 test('decodes one byte (below 253)', t => {
   // Every byte value below 253
   const values = numberArray(0, 252)
-  for (const value of values) t.true(value === decode([value])[0])
+  for(const value of values) t.true(value === decode([value])[0])
 })
 
 test('decodes one byte (>= 253)', t => {
@@ -47,7 +48,5 @@ test('decoder detects output overflow', t => {
   // Test all overflowing values: 3..255
   const overflowing = numberArray(3, 255)
 
-  for (const val of overflowing) {
-    t.throws(() => decode([253, val]), 'outputOverflow')
-  }
+  for(const val of overflowing) t.throws(() => decode([253, val]), 'outputOverflow')
 })

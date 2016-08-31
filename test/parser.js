@@ -1,6 +1,7 @@
 import test from 'ava'
-import Parser from '../src/parser'
 import { crc32 } from 'crc'
+
+import Parser from '../src/parser'
 
 test.beforeEach(t => {
   t.context.parser = new Parser()

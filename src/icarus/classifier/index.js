@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
 import { get } from 'object-path'
+
 import packetHeuristicsConfig from './packet-heuristics'
 
 /**
@@ -17,7 +18,7 @@ export default class Classifier extends EventEmitter {
   /**
    * Constructor.
    */
-  constructor (logger) {
+  constructor(logger) {
     super()
 
     /**
@@ -51,20 +52,20 @@ export default class Classifier extends EventEmitter {
    * @param {Boolean} [updateStationClassification=true] Whether to update the station score.
    * @emits Classifier#stationScore(stationScore) When updateStationClassification is true, the station score is updated and the event is fired.
    */
-  classifyPacket (packet, updateStationClassification = true) {
+  classifyPacket(packet, updateStationClassification = true) {
     this._log.info('classifier.classifyPacket', { updateStationClassification })
     this._log.debug('classifier.classifyPacket', { packet })
     let score = 0
 
     // Iterate and run each heuristic
     let heuristicCount = 0
-    for (const [fields, heuristics] of packetHeuristicsConfig) {
-      for (const field of fields) {
+    for(const [fields, heuristics] of packetHeuristicsConfig) {
+      for(const field of fields) {
         // Get field current value
         const val = get(packet, field)
 
         // When there is no value, the field does not exist => wrong kind of packet.
-        if (val === undefined) {
+        if(val === undefined) {
           this._log.debug('no value, skipping heuristics for', field, { val })
           continue
         }
@@ -72,7 +73,7 @@ export default class Classifier extends EventEmitter {
         // Get last values
         const lastVal = get(this._lastData, field, val)
 
-        for (const heuristic of heuristics) {
+        for(const heuristic of heuristics) {
           heuristicCount++
           this._log.trace('Running heuristic', heuristic.name)
           score += heuristic(val, lastVal)
@@ -84,18 +85,15 @@ export default class Classifier extends EventEmitter {
     score *= 40 / heuristicCount
 
     // The CRC accounts for 60% of the score, unless there are no heuristics
-    if (packet.crc.sent === packet.crc.local) {
-      if (score === Infinity || score === -Infinity || isNaN(score)) {
-        score = 100
-      } else {
-        score += 60
-      }
-    } else {
-      if (score === Infinity || score === -Infinity || isNaN(score)) score = 0
+    if(packet.crc.sent === packet.crc.local) {
+      if(score === Infinity || score === -Infinity || isNaN(score)) score = 100
+      else score += 60
+    } else if(score === Infinity || score === -Infinity || isNaN(score)) {
+      score = 0
     }
 
     // Update station classification
-    if (updateStationClassification) this.classifyStationInc(score)
+    if(updateStationClassification) this.classifyStationInc(score)
 
     // Update _lastData with the current packet fields
     Object.assign(this._lastData, packet)
@@ -113,8 +111,8 @@ export default class Classifier extends EventEmitter {
    * @returns {Number} New station score.
    * @emits Classifier#stationScore(stationScore) Because the station score was updated.
    */
-  classifyStationInc (packetScore) {
-    if (this.stationScore === undefined) {
+  classifyStationInc(packetScore) {
+    if(this.stationScore === undefined) {
       this.stationScore = packetScore
     } else {
       this.stationScore += packetScore

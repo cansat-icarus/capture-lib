@@ -1,7 +1,9 @@
-import test from 'ava'
-import IcarusParser from '../../../src/icarus/data-handler/parser'
 import * as conv from '../../../src/icarus/data-handler/unit-conv'
+
+import test from 'ava'
+
 import strings from '../../../src/icarus/data-handler/cansat-strings'
+import IcarusParser from '../../../src/icarus/data-handler/parser'
 
 const badPacket1 = Buffer.from([0, 2, 253, 1, 253, 0, 0, 0, 0, 0])
 const badPacket2 = Buffer.from([253, 4, 254, 0, 0])

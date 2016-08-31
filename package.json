@@ -11,12 +11,12 @@
   ],
   "scripts": {
     "clean": "rimraf dist/ && mkdirp dist/",
-    "lint": "standard",
+    "lint": "xo",
     "build": "babel src --out-dir dist",
     "build:watch": "npm run build -- --watch",
     "docs": "esdoc -c esdoc.json",
     "test": "npm run lint && npm run coverage",
-    "test:watch": "nodemon --watch src --watch test node_modules/.bin/standard & BABEL_ENV=test ava --watch",
+    "test:watch": "nodemon --watch src --watch test xo & BABEL_ENV=test ava --watch",
     "coverage": "BABEL_ENV=test nyc ava"
   },
   "dependencies": {
@@ -32,7 +32,6 @@
   "devDependencies": {
     "ava": "^0.16.0",
     "babel-cli": "^6.14.0",
-    "babel-eslint": "^6.1.2",
     "babel-plugin-add-module-exports": "^0.2.0",
     "babel-plugin-rewire": "^1.0.0-rc-5",
     "babel-plugin-transform-exponentiation-operator": "^6.8.0",
@@ -45,12 +44,13 @@
     "esdoc": "^0.4.7",
     "esdoc-es7-plugin": "^0.0.3",
     "esdoc-plugin-enhanced-navigation": "^0.1.1",
+    "eslint-plugin-ava": "^3.0.0",
     "memdown": "^1.2.0",
     "mkdirp": "^0.5.1",
     "nodemon": "^1.10.2",
     "nyc": "^8.1.0",
     "rimraf": "^2.5.4",
-    "standard": "^8.0.0"
+    "xo": "^0.16.0"
   },
   "ava": {
     "require": [
@@ -92,10 +92,42 @@
       }
     }
   },
-  "standard": {
-    "parser": "babel-eslint",
-    "ignore": [
-      "dist/"
-    ]
+  "xo": {
+    "esnext": true,
+    "semicolon": false,
+    "space": 2,
+    "plugins": [ "ava" ],
+    "ignores": [ "docs/**" ],
+    "rules": {
+      "babel/new-cap": [
+        "error",
+        {
+          "capIsNewExceptions": [
+            "DS18B20",
+            "MPX4115A"
+          ]
+        }
+      ],
+      "babel/object-curly-spacing": [ "error", "always" ],
+      "curly": [ "error", "multi-or-nest", "consistent" ],
+      "keyword-spacing": [
+        "error",
+        {
+          "overrides": {
+            "catch": { "after": false },
+            "for": { "after": false },
+            "if": { "after": false },
+            "switch": { "after": false },
+            "while": { "after": false }
+          }
+        }
+      ],
+      "no-constant-condition": [ "error", { "checkLoops": false } ],
+      "no-warning-comments": 0,
+      "no-implicit-coercion": 0,
+      "ava/test-ended": 0,
+      "import/no-named-as-default": 0,
+      "import/order": 0
+    }
   }
 }
