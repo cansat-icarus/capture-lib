@@ -40,3 +40,34 @@ test.cb('handles serial data with data-handler', t => {
   const station = new Station()
   station.serial.emit('data')
 })
+
+test('lists available ports flagging the T-Minus transceiver', t => {
+  const station = new Station()
+  const samplePorts = [
+    {
+      comName: '/dev/tty.usbX',
+      vendorId: '0x1234',
+      productId: '0x5678'
+    },
+    {
+      comName: '/dev/ttyUSBX',
+      vendorId: '0x03eb',
+      productId: '0x2404'
+    },
+    {
+      comName: 'COM42',
+      pnpId: 'USB\\VID_ABCD&PID_EF90&ImWindowsAndIApparentlyCantGiveProperInformation'
+    }
+  ]
+
+  // Inject listPorts mock
+  Station.__Rewire__('listPorts', () => Promise.resolve(samplePorts))
+
+  return station.getAvailablePorts()
+    .then(ports => {
+      t.is(ports[0].comName, samplePorts[1].comName)
+      t.is(ports[0].recommend, true)
+      t.is(ports[1], samplePorts[0])
+      t.is(ports[2].comName, samplePorts[2].comName)
+    })
+})
