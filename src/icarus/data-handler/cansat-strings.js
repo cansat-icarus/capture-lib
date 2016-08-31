@@ -10,8 +10,8 @@
 export default {
   messages: [
     'Unknown message/error.',
-    '[Module: temperature] No DS18B20 sensors found.',
-    '[Module: temperature] Only one DS18B20 sensor found.'
+    'No DS18B20 sensors found. [temperature]',
+    'Only one DS18B20 sensor found. [temperature]'
   ],
   moduleNames: [
     'Status LED',
