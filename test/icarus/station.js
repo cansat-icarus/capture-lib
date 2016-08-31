@@ -4,6 +4,7 @@ import PouchDB from 'pouchdb'
 import memdown from 'memdown'
 import Serial from '../../src/serial'
 import Classifier from '../../src/icarus/classifier'
+import fakeLogger from '../helpers/fakelog'
 
 // Avoid polluting test with PouchDB things
 class MemDB extends PouchDB {
@@ -12,6 +13,9 @@ class MemDB extends PouchDB {
   }
 }
 Station.__Rewire__('PouchDB', MemDB)
+
+// Avoid polluting filesystem and console with logs
+Station.__Rewire__('createLogger', () => fakeLogger)
 
 test('constructs', t => {
   // Watch parser usage
@@ -40,6 +44,20 @@ test.cb('handles serial data with data-handler', t => {
   // Create station and trigger data event in station.serial
   const station = new Station()
   station.serial.emit('data')
+})
+
+test('cleans up the mess when requested', t => {
+  const station = new Station()
+
+  // Inject station.serial.close and station.backend.cleanup spies
+  station.serial.close = station.backend.cleanup = () => {
+    t.pass()
+    return Promise.resolve()
+  }
+
+  t.plan(3)
+  return station.cleanup()
+    .then(() => t.pass())
 })
 
 test('lists available ports flagging the T-Minus transceiver', t => {

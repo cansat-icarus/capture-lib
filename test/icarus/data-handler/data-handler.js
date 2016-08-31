@@ -1,5 +1,6 @@
 import test from 'ava'
 import { parser, dataHandler, __Rewire__, __ResetDependency__ } from '../../../src/icarus/data-handler'
+import fakeLogger from '../../helpers/fakelog'
 
 // This test needs to be waited for...
 // The IcarusParser mock breaks other tests
@@ -85,7 +86,8 @@ const genDataHandlerContext = overrides => Object.assign(Object.assign({}, {
     classifyStationInc: () => undefined
   },
   db: { put: () => Promise.resolve() },
-  emit: () => undefined
+  emit: () => undefined,
+  _log: fakeLogger
 }), overrides)
 
 test.cb('saves new packets to the database', t => {

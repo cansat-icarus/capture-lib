@@ -187,7 +187,10 @@ export default class Serial extends EventEmitter {
 
     // Register event listeners
     this._port.on('data', data => this.emit('data', data))
-    this._port.on('error', error => this._log.fatal(error))
+    this._port.on('error', error => {
+      this._log.fatal(error)
+      this.emit('error', error)
+    })
 
     // State tracking
     this._port.on('open', () => this._updateState('open'))
@@ -220,7 +223,6 @@ export default class Serial extends EventEmitter {
  * @return {Promise<Array>} Array of port information objects.
  */
 export function listPorts () {
-  this._log.info('serial.listPorts')
   return new Promise((resolve, reject) => {
     SerialPort.list((err, ports) => {
       if (err) {
@@ -238,7 +240,6 @@ export function listPorts () {
         return port
       })
 
-      this._log.debug('Found ports', { ports })
       resolve(ports)
     })
   })

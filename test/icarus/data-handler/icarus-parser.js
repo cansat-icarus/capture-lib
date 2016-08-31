@@ -101,7 +101,7 @@ test('handles settings packets', t => {
   t.is(packet.counter, 12)
   t.is(packet.sentAt.millis, 120)
   t.is(packet.module.id, 1)
-  t.is(packet.module.enabled, true)
+  t.is(packet.module.enable, true)
   t.is(packet.module.interval, 1000)
   t.is(packet.module.lastRun, 2000)
   t.is(packet.module.name, strings.moduleNames[packet.module.id])

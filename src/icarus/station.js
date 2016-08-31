@@ -46,12 +46,17 @@ export default class Station extends EventEmitter {
     /**
      * {@link Serial} instance with the {@link parser} attached
      */
-    this.serial = new Serial(this._log.child('station.serial'), parser())
+    this.serial = new Serial(this._log.child({ childId: 'station.serial' }), parser())
 
     /**
      * {@link Classifier} instance.
      */
-    this.classifier = new Classifier(this._log.child('station.classifier'))
+    this.classifier = new Classifier(this._log.child({ childId: 'station.classifier' }))
+
+    /**
+     * {@link Backend} instance.
+     */
+    this.backend = new Backend(this._log.child({ childId: 'station.backend' }), this)
 
     // Handle incoming packets
     this.serial.on('data', this::dataHandler)
