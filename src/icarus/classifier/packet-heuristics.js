@@ -1,13 +1,12 @@
 /**
  * Heuristic creation helper.
  * Fails when value leaves a certain interval: [min, max].
- * @param {String} field The object path for the field to be tested.
  * @param {Number} min Minimum value.
  * @param {Number} max Maximum value.
  * @returns {Function} The heuristic function.
  * @private
  */
-function minmaxH (field, min, max) {
+function minmaxH (min, max) {
   return val => val >= min && val <= max
 }
 
