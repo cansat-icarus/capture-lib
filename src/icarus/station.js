@@ -3,6 +3,7 @@ import PouchDB from 'pouchdb'
 import { default as Serial, listPorts } from '../serial'
 import Classifier from './classifier'
 import { parser, dataHandler } from './data-handler'
+import createLogger from './log'
 
 // T-Minus Transceiver information
 /** T-Minus Transceiver Vendor ID */
@@ -33,17 +34,29 @@ export default class Station extends EventEmitter {
     this.db = new PouchDB('db-' + name)
 
     /**
+     * Log database instance, internal to the station.
+     */
+    this.logDb = new PouchDB('db-log-' + name)
+
+    /**
+     * Logger instance.
+     */
+    this._log = createLogger(name, this.logDb)
+
+    /**
      * {@link Serial} instance with the {@link parser} attached
      */
-    this.serial = new Serial(parser())
+    this.serial = new Serial(this._log.child('station.serial'), parser())
 
     /**
      * {@link Classifier} instance.
      */
-    this.classifier = new Classifier()
+    this.classifier = new Classifier(this._log.child('station.classifier'))
 
     // Handle incoming packets
     this.serial.on('data', this::dataHandler)
+
+    this._log.info('station.construct end')
   }
 
   /**
@@ -53,6 +66,7 @@ export default class Station extends EventEmitter {
    * @return {Promise<Array>} List of serialports.
    */
   getAvailablePorts () {
+    this._log.info('station.getAvailablePorts')
     return listPorts()
       .then(list => {
         list = list.map(port => {
@@ -69,6 +83,7 @@ export default class Station extends EventEmitter {
           return p1.comName.localeCompare(p2.comName)
         })
 
+        this._log.debug('Available ports', { ports: list })
         return list
       })
   }

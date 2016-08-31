@@ -14,8 +14,10 @@ import packetHeuristicsConfig from './packet-heuristics'
  * most recent packet).
  */
 export default class Classifier extends EventEmitter {
-  /** @ignore */
-  constructor () {
+  /**
+   * Constructor.
+   */
+  constructor (logger) {
     super()
 
     /**
@@ -30,6 +32,15 @@ export default class Classifier extends EventEmitter {
      * @type {Object}
      */
     this._lastData = Object.create(null)
+
+    /**
+     * Logger instance.
+     * @type {Object}
+     */
+    this._log = logger
+
+    this._log.info('classifier.construct')
+    this._log.debug('classifier config', { packetHeuristicsConfig })
   }
 
   /**
@@ -41,6 +52,8 @@ export default class Classifier extends EventEmitter {
    * @emits Classifier#stationScore(stationScore) When updateStationClassification is true, the station score is updated and the event is fired.
    */
   classifyPacket (packet, updateStationClassification = true) {
+    this._log.info('classifier.classifyPacket', { updateStationClassification })
+    this._log.debug('classifier.classifyPacket', { packet })
     let score = 0
 
     // Iterate and run each heuristic
@@ -51,13 +64,17 @@ export default class Classifier extends EventEmitter {
         const val = get(packet, field)
 
         // When there is no value, the field does not exist => wrong kind of packet.
-        if (val === undefined) continue
+        if (val === undefined) {
+          this._log.debug('no value, skipping heuristics for', field, { val })
+          continue
+        }
 
         // Get last values
         const lastVal = get(this._lastData, field, val)
 
         for (const heuristic of heuristics) {
           heuristicCount++
+          this._log.trace('Running heuristic', heuristic.name)
           score += heuristic(val, lastVal)
         }
       }

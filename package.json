@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "babel-runtime": "^6.11.6",
+    "bunyan": "^1.8.1",
     "crc": "^3.4.0",
     "object-path": "^0.11.1",
     "pouchdb": "^5.4.5",

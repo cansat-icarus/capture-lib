@@ -11,7 +11,7 @@ export default class Serial extends EventEmitter {
    * @param {Function} [parser=raw] A node-serialport parser.
    * @param {Number} [baud=19200] Desired baud rate.
    */
-  constructor (parser, baud = 19200) {
+  constructor (logger, parser, baud = 19200) {
     super()
 
     /**
@@ -43,6 +43,12 @@ export default class Serial extends EventEmitter {
      * @type {String}
      */
     this._state = 'close'
+
+    /**
+     * Logger instance. (Bunyan API).
+     * @type Object
+     */
+    this._log = logger
   }
 
   /**
@@ -54,12 +60,21 @@ export default class Serial extends EventEmitter {
    * @return {Promise} When path is changed and the port recreated/reopened.
    */
   setPath (path) {
+    this._log.debug('serial.setPath')
+    // Guard for already changed port...
+    if (path === this._path) {
+      this._log.trace('serial._path needs no change', path)
+      return Promise.resolve()
+    }
+
     return new Promise(resolve => {
       // Any _port recreation will open this new path
+      this._log.trace('serial._path changed to', path)
       this._path = path
 
       // Destroy and recreate _port when necessary
       if (this._port) {
+        this._log.trace('serial._path changed: recreating existing port')
         let open = this._port.isOpen()
         this._destroyPort()
           .then(() => open ? this.open() : this._createPort())
@@ -78,18 +93,24 @@ export default class Serial extends EventEmitter {
    * @return {Promise} Resolved when the serial port is open.
    */
   open () {
+    this._log.debug('serial.open')
     return new Promise(resolve => {
      // No port? Create it!
       if (!this._port) {
+        this._log.trace('port does not exist')
         return this._createPort()
           .then(() => this.open())
           .then(resolve)
       }
 
       // Already open = nothing to do
-      if (this._port.isOpen()) return resolve()
+      if (this._port.isOpen()) {
+        this._log.trace('port already open')
+        return resolve()
+      }
 
       // Open the port
+      this._log.trace('calling serial._port.open')
       this._port.open(resolve)
     })
   }
@@ -101,9 +122,14 @@ export default class Serial extends EventEmitter {
    * @return {Promise<!Error>} Resolved when the serialport is closed.
    */
   close () {
+    this._log.debug('serial.close')
     // Already closed/no port = nothing to do
-    if (!this._port || !this._port.isOpen()) return Promise.resolve()
+    if (!this._port || !this._port.isOpen()) {
+      this._log.trace('port already closed/does not exist')
+      return Promise.resolve()
+    }
 
+    this._log.trace('calling serial._port.close')
     return new Promise(resolve => this._port.close(resolve))
   }
 
@@ -115,17 +141,22 @@ export default class Serial extends EventEmitter {
    * @returns {Promise<!Error>} Resolves when all is done.
    */
   _destroyPort () {
+    this._log.debug('serial._destroyPort')
     return new Promise(resolve => {
       this._port.removeAllListeners()
 
       // Only close if necessary
       if (!this._port.isOpen()) {
+        this._log.trace('port not open, removing it')
         this._port = undefined
         return resolve()
       }
 
+      this._log.trace('port open, closing')
       this._port.close(error => {
-        if (error) this.emit('error', error)
+        if (error) {
+          this._log.error('Error closing port!', error)
+        }
 
         // Must keep going
         this._port = undefined
@@ -156,7 +187,7 @@ export default class Serial extends EventEmitter {
 
     // Register event listeners
     this._port.on('data', data => this.emit('data', data))
-    this._port.on('error', error => this.emit('error', error))
+    this._port.on('error', error => this._log.fatal(error))
 
     // State tracking
     this._port.on('open', () => this._updateState('open'))
@@ -189,9 +220,11 @@ export default class Serial extends EventEmitter {
  * @return {Promise<Array>} Array of port information objects.
  */
 export function listPorts () {
+  this._log.info('serial.listPorts')
   return new Promise((resolve, reject) => {
     SerialPort.list((err, ports) => {
       if (err) {
+        this._log.fatal(err, { ports })
         return resolve([])
       }
 
@@ -205,6 +238,7 @@ export function listPorts () {
         return port
       })
 
+      this._log.debug('Found ports', { ports })
       resolve(ports)
     })
   })
