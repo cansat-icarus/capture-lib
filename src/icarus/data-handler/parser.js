@@ -75,7 +75,7 @@ export default class IcarusParser extends Parser {
       case 's':
         // Module information
         this.readUInt('module.id')
-        this.readBoolean('module.enabled')
+        this.readBoolean('module.enable')
         this.readUInt('module.interval', 4)
         this.readUInt('module.lastRun', 4)
 
