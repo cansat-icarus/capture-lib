@@ -18,13 +18,19 @@ export default class Station extends EventEmitter {
   /**
    * Sets up all relevant class instances (Serial, parsers...) and events listeners.
    */
-  constructor () {
+  constructor (name) {
     super()
+
+    /**
+     * Name/ID of the station
+     * @type {String}
+     */
+    this.name = name
 
     /**
      * Database instance, internal to the station.
      */
-    this.db = new PouchDB('station-db')
+    this.db = new PouchDB('db-' + name)
 
     /**
      * {@link Serial} instance with the {@link parser} attached

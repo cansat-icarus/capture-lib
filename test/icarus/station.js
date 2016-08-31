@@ -18,12 +18,13 @@ test('constructs', t => {
   const parser = function () {}
   Station.__Rewire__('parser', () => parser)
 
-  const station = new Station()
+  const station = new Station('the name')
 
   t.true(station.classifier instanceof Classifier)
   t.true(station.serial instanceof Serial)
   t.true(station.db instanceof PouchDB)
   t.is(station.serial._parser, parser)
+  t.is(station.name, 'the name')
 
   Station.__ResetDependency__('parser')
 })
