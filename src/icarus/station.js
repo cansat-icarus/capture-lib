@@ -92,4 +92,13 @@ export default class Station extends EventEmitter {
         return list
       })
   }
+
+  /**
+   * Cleanup function to be run before exiting.
+   * @return {Promise} Promise that completes when all is clean.
+   */
+  cleanup() {
+    this._log.info('station.cleanup')
+    return this.serial.close()
+  }
 }
