@@ -67,7 +67,7 @@ export default class Serial extends EventEmitter {
       return Promise.resolve()
     }
 
-    return new Promise(resolve => {
+    return (new Promise(resolve => {
       // Any _port recreation will open this new path
       this._log.trace('serial._path changed to', path)
       this._path = path
@@ -82,7 +82,8 @@ export default class Serial extends EventEmitter {
       } else {
         resolve()
       }
-    })
+    }))
+      .then(() => this.emit('pathChange', path))
   }
 
   /**
