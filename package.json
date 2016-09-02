@@ -24,7 +24,12 @@
     "bunyan": "^1.8.1",
     "crc": "^3.4.0",
     "object-path": "^0.11.1",
-    "pouchdb": "^5.4.5",
+    "pouchdb": {
+      "version": "5.4.5",
+      "dependencies": {
+        "request": "2.74.0"
+      }
+    },
     "serialport": "^4.0.1",
     "socket.io-client": "^1.4.8",
     "uuid": "^2.0.2"
