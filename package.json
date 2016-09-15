@@ -24,12 +24,7 @@
     "bunyan": "^1.8.1",
     "crc": "^3.4.0",
     "object-path": "^0.11.1",
-    "pouchdb": {
-      "version": "5.4.5",
-      "dependencies": {
-        "request": "2.74.0"
-      }
-    },
+    "pouchdb": "^6.0.4",
     "serialport": "^4.0.1",
     "socket.io-client": "^1.4.8",
     "uuid": "^2.0.2"
@@ -101,8 +96,12 @@
     "esnext": true,
     "semicolon": false,
     "space": 2,
-    "plugins": [ "ava" ],
-    "ignores": [ "docs/**" ],
+    "plugins": [
+      "ava"
+    ],
+    "ignores": [
+      "docs/**"
+    ],
     "rules": {
       "babel/new-cap": [
         "error",
@@ -113,21 +112,43 @@
           ]
         }
       ],
-      "babel/object-curly-spacing": [ "error", "always" ],
-      "curly": [ "error", "multi-or-nest", "consistent" ],
+      "babel/object-curly-spacing": [
+        "error",
+        "always"
+      ],
+      "curly": [
+        "error",
+        "multi-or-nest",
+        "consistent"
+      ],
       "keyword-spacing": [
         "error",
         {
           "overrides": {
-            "catch": { "after": false },
-            "for": { "after": false },
-            "if": { "after": false },
-            "switch": { "after": false },
-            "while": { "after": false }
+            "catch": {
+              "after": false
+            },
+            "for": {
+              "after": false
+            },
+            "if": {
+              "after": false
+            },
+            "switch": {
+              "after": false
+            },
+            "while": {
+              "after": false
+            }
           }
         }
       ],
-      "no-constant-condition": [ "error", { "checkLoops": false } ],
+      "no-constant-condition": [
+        "error",
+        {
+          "checkLoops": false
+        }
+      ],
       "no-warning-comments": 0,
       "no-implicit-coercion": 0,
       "ava/test-ended": 0,
