@@ -1,34 +1,26 @@
-import memdown from 'memdown'
 import test from 'ava'
-import PouchDB from 'pouchdb'
 
 import fakeLogger from '../helpers/fakelog'
 import Classifier from '../../src/icarus/classifier'
 import Serial from '../../src/serial'
 import Station from '../../src/icarus/station'
+import { logDb, dataDb } from '../helpers/fakedb'
 
-// Avoid polluting test with PouchDB things
-class MemDB extends PouchDB {
-  constructor(path, options = {}) {
-    super(path, Object.assign(options, { db: memdown }))
-  }
+function _createStation() {
+  return new Station('the name', { logDb, dataDb }, fakeLogger)
 }
-Station.__Rewire__('PouchDB', MemDB)
-
-// Avoid polluting filesystem and console with logs
-Station.__Rewire__('createLogger', () => fakeLogger)
 
 test('constructs', t => {
   // Watch parser usage
   const parser = function () {}
   Station.__Rewire__('parser', () => parser)
 
-  const station = new Station('the name')
+  const station = _createStation()
 
   t.true(station.classifier instanceof Classifier)
   t.true(station.serial instanceof Serial)
-  t.true(station.db instanceof PouchDB)
-  t.true(station.logDb instanceof PouchDB)
+  t.is(station.logDb, logDb)
+  t.is(station.db, dataDb)
   t.is(station.serial._parser, parser)
   t.is(station.name, 'the name')
 
@@ -44,12 +36,12 @@ test.cb('handles serial data with data-handler', t => {
   Station.__Rewire__('dataHandler', dataHandler)
 
   // Create station and trigger data event in station.serial
-  const station = new Station()
+  const station = _createStation()
   station.serial.emit('data')
 })
 
 test('cleans up the mess when requested', t => {
-  const station = new Station()
+  const station = _createStation()
 
   // Inject station.serial.close and station.backend.cleanup spies
   station.serial.close = station.backend.cleanup = () => {
@@ -63,7 +55,7 @@ test('cleans up the mess when requested', t => {
 })
 
 test('lists available ports flagging the T-Minus transceiver', t => {
-  const station = new Station()
+  const station = _createStation()
   const samplePorts = [
     {
       comName: '/dev/tty.usbX',

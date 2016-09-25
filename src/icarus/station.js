@@ -1,7 +1,5 @@
-import PouchDB from 'pouchdb'
 import { EventEmitter } from 'events'
 
-import createLogger from './log'
 import Classifier from './classifier'
 import { default as Serial, listPorts } from '../serial'
 import { parser, dataHandler } from './data-handler'
@@ -20,7 +18,7 @@ export default class Station extends EventEmitter {
   /**
    * Sets up all relevant class instances (Serial, parsers...) and events listeners.
    */
-  constructor(name) {
+  constructor(name, { dataDb, logDb }, log) {
     super()
 
     /**
@@ -32,17 +30,17 @@ export default class Station extends EventEmitter {
     /**
      * Database instance, internal to the station.
      */
-    this.db = new PouchDB('db-' + name)
+    this.db = dataDb
 
     /**
      * Log database instance, internal to the station.
      */
-    this.logDb = new PouchDB('db-log-' + name)
+    this.logDb = logDb
 
     /**
      * Logger instance.
      */
-    this._log = createLogger(name, this.logDb)
+    this._log = log
 
     /**
      * {@link Serial} instance with the {@link parser} attached
