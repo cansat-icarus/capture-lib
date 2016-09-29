@@ -193,6 +193,13 @@ test('_destroyPort() destroys a closed port', t => {
     .then(() => t.falsy(t.context.serial._port))
 })
 
+test('_destroyPort() does not crash when there is no port to destroy [BUGFIX]', t => {
+  // Just destroy the port multiple times and ava will check for exceptions
+  return t.context.serial._destroyPort()
+    .then(::t.context.serial._destroyPort)
+    .then(::t.context.serial._destroyPort)
+})
+
 test('_createPort() creates a port if it does not exist', t => {
   // Save the current port
   const oldPort = t.context.serial._port

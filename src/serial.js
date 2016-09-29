@@ -143,6 +143,8 @@ export default class Serial extends EventEmitter {
    */
   _destroyPort() {
     this._log.debug('serial._destroyPort')
+    if(!this._port) return Promise.resolve()
+
     return new Promise(resolve => {
       this._port.removeAllListeners()
 
