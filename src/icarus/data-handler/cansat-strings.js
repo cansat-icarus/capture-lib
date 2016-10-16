@@ -8,15 +8,15 @@
  * @property {Array} moduleNames Array of names of each CanSat Module (as in module class instance, registered in the Scheduler).
  */
 export default {
-  messages: [
-    'Unknown message/error.',
-    'No DS18B20 sensors found. [temperature]',
-    'Only one DS18B20 sensor found. [temperature]'
-  ],
-  moduleNames: [
-    'Status LED',
-    'Telemetry packet routine',
-    'Temperature update',
-    'Pressure update'
-  ]
+	messages: [
+		'Unknown message/error.',
+		'No DS18B20 sensors found. [temperature]',
+		'Only one DS18B20 sensor found. [temperature]'
+	],
+	moduleNames: [
+		'Status LED',
+		'Telemetry packet routine',
+		'Temperature update',
+		'Pressure update'
+	]
 }

@@ -1,6 +1,6 @@
 import bunyan from 'bunyan'
 
 export default bunyan.createLogger({
-  name: 'fake',
-  streams: []
+	name: 'fake',
+	streams: []
 })

@@ -7,7 +7,7 @@
  * @private
  */
 function minmaxH(min, max) {
-  return val => val >= min && val <= max
+	return val => val >= min && val <= max
 }
 
 /**
@@ -18,7 +18,7 @@ function minmaxH(min, max) {
  * @private
  */
 function variationH(variation) {
-  return (val, lastVal) => Math.abs(val - lastVal) <= variation
+	return (val, lastVal) => Math.abs(val - lastVal) <= variation
 }
 
 /**
@@ -26,7 +26,7 @@ function variationH(variation) {
  * Format: [ [...fields], [...heuristics] ].
  */
 export default new Map([
-  [['counter', 'sentAt.millis'], [variationH(1)]],
-  [['temp.0', 'temp.1'], [minmaxH(10, 37), variationH(10)]],
-  [['press.0', 'press.1'], [minmaxH(0, 2000), variationH(100)]]
+	[['counter', 'sentAt.millis'], [variationH(1)]],
+	[['temp.0', 'temp.1'], [minmaxH(10, 37), variationH(10)]],
+	[['press.0', 'press.1'], [minmaxH(0, 2000), variationH(100)]]
 ])

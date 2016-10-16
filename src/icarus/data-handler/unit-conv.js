@@ -4,7 +4,7 @@
  * @return {Number} ºC temperature.
  */
 export function DS18B20(raw) {
-  return raw / 128 // TODO: confirm value
+	return raw / 128 // TODO: confirm value
 }
 
 /**
@@ -13,5 +13,5 @@ export function DS18B20(raw) {
  * @return {Number} hPa pressure.
  */
 export function MPX4115A(raw) {
-  return ((raw / 1024.0) + 0.095) / 0.0009 // TODO: confirm value
+	return ((raw / 1024.0) + 0.095) / 0.0009 // TODO: confirm value
 }
