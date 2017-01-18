@@ -44,8 +44,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion
 - Add string tables for raw CanSat values
 
-[Unreleased]: https://github.com/cansat-icarus/cansat/compare/v0.3.0...HEAD
-[v0.3.0]: https://github.com/cansat-icarus/cansat/compare/v0.2.1...v0.3.0
-[v0.2.1]: https://github.com/cansat-icarus/cansat/compare/v0.2.0...v0.2.1
-[v0.2.0]: https://github.com/cansat-icarus/cansat/compare/v0.1.0...v0.2.0
-[v0.1.0]: https://github.com/cansat-icarus/cansat/compare/e73fe964bc6dfae26e1a6bbb03d0565b35a394f9...v0.1.0
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.1...v0.3.0
+[v0.2.1]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.0...v0.2.1
+[v0.2.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.1.0...v0.2.0
+[v0.1.0]: https://github.com/cansat-icarus/capture-lib/compare/e73fe964bc6dfae26e1a6bbb03d0565b35a394f9...v0.1.0
