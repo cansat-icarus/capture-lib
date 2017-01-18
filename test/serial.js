@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import {default as Serial, listPorts, __Rewire__, __ResetDependency__} from '../src/serial'
-import fakeLogger from './helpers/fakelog'
+import createFakeLogger from './helpers/fakelog'
 
 const dummyParser = (emitter, buf) => emitter.emit('data', buf)
 
@@ -24,7 +24,7 @@ function stateTest(state, event = state) {
 }
 
 test.beforeEach(async t => {
-	t.context.serial = new Serial(fakeLogger, dummyParser)
+	t.context.serial = new Serial(createFakeLogger(), dummyParser)
 	await t.context.serial.setPath('do not use me')
 	await t.context.serial._createPort()
 })
@@ -34,7 +34,7 @@ test('constructor()', t => {
 	t.is(t.context.serial._parser, dummyParser)
 	t.is(t.context.serial._state, 'close')
 
-	const serial = new Serial(fakeLogger, dummyParser, 9600)
+	const serial = new Serial(createFakeLogger(), dummyParser, 9600)
 	t.true(!serial._port)
 	t.true(!serial._path)
 	t.is(serial._baud, 9600)

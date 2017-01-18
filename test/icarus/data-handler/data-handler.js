@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import fakeLogger from '../../helpers/fakelog'
+import createFakeLogger from '../../helpers/fakelog'
 import {parser, dataHandler, __Rewire__, __ResetDependency__} from '../../../src/icarus/data-handler'
 
 // This test needs to be waited for...
@@ -93,7 +93,7 @@ const genDataHandlerContext = overrides => Object.assign(Object.assign({}, {
 	},
 	db: {put: () => Promise.resolve()},
 	emit: () => undefined,
-	_log: fakeLogger
+	_log: createFakeLogger()
 }), overrides)
 
 test('saves new packets to the database', t => {

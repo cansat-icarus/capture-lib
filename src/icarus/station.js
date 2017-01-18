@@ -1,6 +1,8 @@
 import {EventEmitter} from 'events'
 
 import {default as Serial, listPorts} from '../serial'
+import getDB from '../db'
+import createLogger from '../log'
 import Classifier from './classifier'
 import {parser, dataHandler} from './data-handler'
 
@@ -18,7 +20,7 @@ export default class Station extends EventEmitter {
 	/**
 	 * Sets up all relevant class instances (Serial, parsers...) and events listeners.
 	 */
-	constructor(name, {dataDb, logDb}, log) {
+	constructor(name) {
 		super()
 
 		/**
@@ -30,17 +32,17 @@ export default class Station extends EventEmitter {
 		/**
 		 * Database instance, internal to the station.
 		 */
-		this.db = dataDb
+		this.db = getDB(`data-${name}`)
 
 		/**
 		 * Log database instance, internal to the station.
 		 */
-		this.logDb = logDb
+		this.logDB = getDB('log')
 
 		/**
 		 * Logger instance.
 		 */
-		this._log = log
+		this._log = createLogger(this.name, this.logDB)
 
 		/**
 		 * {@link Serial} instance with the {@link parser} attached

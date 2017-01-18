@@ -1,13 +1,23 @@
 import test from 'ava'
 
-import fakeLogger from '../helpers/fakelog'
+import createFakeLogger from '../helpers/fakelog'
 import Classifier from '../../src/icarus/classifier'
 import Serial from '../../src/serial'
 import Station from '../../src/icarus/station'
-import {logDb, dataDb} from '../helpers/fakedb'
+import {default as getFakeDB, FakeDB} from '../helpers/fakedb'
 
 function _createStation() {
-	return new Station('the name', {logDb, dataDb}, fakeLogger)
+	// Avoid fs and console pollution
+	Station.__Rewire__('getDB', getFakeDB)
+	Station.__Rewire__('createLogger', createFakeLogger)
+
+	const station = new Station('the name')
+
+	// Just undo the mocking
+	Station.__ResetDependency__('getDB')
+	Station.__ResetDependency__('createLogger')
+
+	return station
 }
 
 test('constructs', t => {
@@ -19,8 +29,8 @@ test('constructs', t => {
 
 	t.true(station.classifier instanceof Classifier)
 	t.true(station.serial instanceof Serial)
-	t.is(station.logDb, logDb)
-	t.is(station.db, dataDb)
+	t.true(station.logDB instanceof FakeDB)
+	t.true(station.db instanceof FakeDB)
 	t.is(station.serial._parser, parser)
 	t.is(station.name, 'the name')
 
@@ -44,14 +54,13 @@ test('cleans up the mess when requested', async t => {
 	const station = _createStation()
 
 	// Inject station.serial.close and station.backend.cleanup spies
-	station.serial.close = station.backend.cleanup = () => {
+	station.serial.close = () => {
 		t.pass()
 		return Promise.resolve()
 	}
 
-	t.plan(3)
+	t.plan(1)
 	await station.cleanup()
-	t.pass()
 })
 
 test('lists available ports flagging the T-Minus transceiver', async t => {

@@ -1,10 +1,10 @@
 import test from 'ava'
 
-import fakeLogger from '../helpers/fakelog'
+import createFakeLogger from '../helpers/fakelog'
 import Classifier from '../../src/icarus/classifier'
 
 test.beforeEach(t => {
-	t.context.classifier = new Classifier(fakeLogger)
+	t.context.classifier = new Classifier(createFakeLogger())
 })
 
 test('constructs', t => {
