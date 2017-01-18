@@ -2,7 +2,6 @@
 [![Build Status][travis-image]][travis-url]
 [![Codecov Status][codecov-image]][codecov-url]
 [![Dependency Status][depstat-image]][depstat-url]
-[![Standard][standard-image]][standard-url]
 > Does anything the groundstation can! To use it in a real world scenario wrap it for a specific platform/use case or use a pre-built wrapper.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -36,14 +35,14 @@ If you really have to use it and cannot wait, use git submodules! But still crea
 
 ## Building, testing and all the workflow things
 
-Source code uses ES2015 and some experimental syntax. So, until no supported nodejs versions remain that cannot run our code, babel is used for transpiling the source.
+Source code uses ES2017 and some experimental syntax. So, until no supported nodejs versions remain that cannot run our code, babel is used for transpiling the source.
 
-My advice: change things and when you're done, lint, run unit tests, generate and check the new documentation (if changed), check test coverage (make sure it does not drop). And while you're fixing bugs (a unit test failing), run test:watch for help. For always-running automatic linting, use a [standard plugin](https://github.com/feross/standard#text-editor-plugins) in your editor.
+My advice: change things and when you're done, lint, run unit tests, generate and check the new documentation (if changed), check test coverage (make sure it does not drop). And while you're fixing bugs (a unit test failing), run test:watch for help. For always-running automatic linting, use a [xo plugin](https://github.com/sindresorhus/xo#editor-plugins) in your editor.
 
 ```bash
 $ npm run clean       # remove and recreate output directory (dist)
 
-$ npm run lint        # lint source using standard
+$ npm run lint        # lint source using xo
 
 $ npm run build       # transpile source code into ./dist
 
@@ -51,11 +50,11 @@ $ npm run build:watch # transpile source code into ./dist (and watch for changes
 
 $ npm run docs        # generate documentation
 
-$ npm run test        # run unit tests
-
-$ npm run test:watch  # run unit tests (and watch for changes in code)
-
 $ npm run coverage    # run unit tests and generate code coverage report
+
+$ npm run test        # run unit tests (with code coverage) and run the linter
+
+$ npm run test:watch  # run unit tests and the linter everytime the source changes
 ```
 
 ## Features
@@ -111,7 +110,6 @@ API documentation is available [here](https://cansat-icarus.github.io/capture-li
 Just fork the project, do what you want (while trying to follow the advice below), and send a pull request. Or file an issue if your a bit lost... For contacting us, you have links to social media profiles and email in our [website](https://cansat-icarus.github.io/).
 
 Some advice for a good pull request:
-- Before committing, **transpile** your changes and include them, no one should be forced to install babel when trying to use the library.
 - If you're adding new features, **write unit tests** for them.
 - **Run the unit tests** before committing.
 - If the tests fail, and you're doing it on purpose, you better have a good explanation! Having a valid reason, change the unit tests to what they should be.
@@ -131,8 +129,3 @@ MIT © 2016 [André Breda](https://github.com/addobandre)
 
 [depstat-url]: https://david-dm.org/cansat-icarus/capture-lib
 [depstat-image]: https://david-dm.org/cansat-icarus/capture-lib.svg?style=flat
-
-[download-image]: http://img.shields.io/npm/dm/capture-lib.svg?style=flat
-
-[standard-image]: https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat
-[standard-url]: http://standardjs.com/
