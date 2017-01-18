@@ -69,7 +69,7 @@
           "env",
           {
             "targets": {
-              "node": 4
+              "node": "current"
             },
             "modules": "commonjs"
           }
@@ -91,6 +91,7 @@
         "env",
         {
           "targets": {
+            "electron": "1.4",
             "node": 4
           },
           "modules": "commonjs"
@@ -108,6 +109,17 @@
     ],
     "env": {
       "test": {
+        "presets": [
+          [
+            "env",
+            {
+              "targets": {
+                "node": "current"
+              },
+              "modules": "commonjs"
+            }
+          ]
+        ],
         "plugins": [
           "rewire"
         ],
