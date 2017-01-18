@@ -39,7 +39,17 @@ export function decode(input) {
  * @return {Buffer} Encoded buffer.
  */
 export function encode(input) {
-	// TODO: implement
-	// VERY LOW PRIORITY, SHOULDN'T BE NECESSARY
-	return input
+	const output = Buffer.alloc(input.length * 2)
+
+	let iOut = 0
+	for (const inByte of input) {
+		if (inByte < 253) {
+			output[iOut++] = inByte
+		} else {
+			output[iOut++] = 253
+			output[iOut++] = inByte - 253
+		}
+	}
+
+	return output.slice(0, iOut)
 }

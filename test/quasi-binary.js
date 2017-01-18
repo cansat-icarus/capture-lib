@@ -1,6 +1,7 @@
 import test from 'ava'
+import jsc from 'jsverify'
 
-import {decode} from '../src/quasi-binary'
+import {encode, decode} from '../src/quasi-binary'
 
 // Returns an array: [min, min+1, ..., max]
 function numberArray(min, max) {
@@ -54,4 +55,14 @@ test('decoder detects output overflow', t => {
 	for (const val of overflowing) {
 		t.throws(() => decode([253, val]), 'outputOverflow')
 	}
+})
+
+test('property check checks out', t => {
+	const inputGen = jsc.array(jsc.integer(0, 255))
+	const assertion = a => decode(encode(a)) !== a
+	t.true(jsc.check(jsc.forall(inputGen, assertion), {
+		tests: 1000,
+		size: 100,
+		quiet: true
+	}))
 })
