@@ -27,10 +27,10 @@
     "pouchdb": "^6.1.1",
     "serialport": "^4.0.1",
     "socket.io-client": "^1.4.8",
-    "uuid": "^2.0.2"
+    "uuid": "^3.0.1"
   },
   "devDependencies": {
-    "ava": "^0.16.0",
+    "ava": "^0.17.0",
     "babel-cli": "^6.14.0",
     "babel-eslint": "^7.0.0",
     "babel-plugin-add-module-exports": "^0.2.0",
@@ -42,19 +42,19 @@
     "babel-plugin-transform-function-bind": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-plugin-transform-runtime": "^6.12.0",
-    "babel-preset-env": "^0.0.6",
+    "babel-preset-env": "^1.1.8",
     "babel-register": "^6.11.6",
-    "esdoc": "^0.4.7",
+    "esdoc": "^0.5.2",
     "esdoc-es7-plugin": "^0.0.3",
     "esdoc-plugin-enhanced-navigation": "^0.1.1",
-    "eslint-plugin-ava": "^3.0.0",
-    "eslint-plugin-babel": "^3.3.0",
+    "eslint-plugin-ava": "^4.0.1",
+    "eslint-plugin-babel": "^4.0.1",
     "eslint-plugin-json": "^1.2.0",
     "jsverify": "^0.7.4",
     "memdown": "^1.2.0",
     "mkdirp": "^0.5.1",
     "nodemon": "^1.10.2",
-    "nyc": "^8.1.0",
+    "nyc": "^10.1.2",
     "rimraf": "^2.5.4",
     "xo": "^0.17.0"
   },
@@ -156,7 +156,9 @@
       {
         "files": "test/**/*",
         "rules": {
-          "import/named": ["off"]
+          "import/named": [
+            "off"
+          ]
         }
       }
     ]
