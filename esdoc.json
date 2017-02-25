@@ -11,10 +11,10 @@
   "coverage": true,
   "includeSource": true,
   "title": "CanSat Groundstation Library",
-  "plugins": [
-    { "name": "esdoc-es7-plugin" },
-    { "name": "esdoc-plugin-enhanced-navigation" }
-  ],
+  "experimentalProposal": {
+    "exportExtensions": true,
+    "functionBind": true
+  },
   "manual": {
     "changelog": ["./CHANGELOG.md"]
   },
