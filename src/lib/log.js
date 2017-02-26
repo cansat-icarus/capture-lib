@@ -11,6 +11,9 @@ export default function createLogger(name, db) {
 
 			// save to db
 			db.post(obj)
+
+			// TODO: if it's an error, somehow pass the db document id (callback?)
+			//       Useful for notifications
 		}
 	}
 

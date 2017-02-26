@@ -1,8 +1,8 @@
 import {EventEmitter} from 'events'
 
-import {default as Serial, listPorts} from '../serial'
-import getDB from '../db'
-import createLogger from '../log'
+import Serial, {listPorts} from '../serial'
+import getDB from '../lib/db'
+import createLogger from '../lib/log'
 import Backend from './backend'
 import Classifier from './classifier'
 import {parser, dataHandler} from './data-handler'
