@@ -3,6 +3,7 @@ import {EventEmitter} from 'events'
 import {default as Serial, listPorts} from '../serial'
 import getDB from '../db'
 import createLogger from '../log'
+import Backend from './backend'
 import Classifier from './classifier'
 import {parser, dataHandler} from './data-handler'
 
@@ -54,6 +55,16 @@ export default class Station extends EventEmitter {
 		 */
 		this.classifier = new Classifier(this._log.child({childId: 'station.classifier'}))
 
+		/**
+		 * {@link Backend} connector instance.
+		 */
+		this.backend = new Backend(
+			this.name,
+			this._log.child({childId: 'station.backendLink'}),
+			this.db,
+			this.logDB
+		)
+
 		// Handle incoming packets
 		this.serial.on('data', this::dataHandler)
 
@@ -103,5 +114,6 @@ export default class Station extends EventEmitter {
 	cleanup() {
 		this._log.info('station.cleanup')
 		return this.serial.close()
+			.then(this.backend.cleanup())
 	}
 }

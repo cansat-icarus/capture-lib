@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- Backend connection logic and data/log db replication
 
 ## [v0.3.0] - 2016-08-14
 ### Tested configurations
