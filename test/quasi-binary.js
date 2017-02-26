@@ -57,7 +57,7 @@ test('decoder detects output overflow', t => {
 	}
 })
 
-test('property check checks out', t => {
+test('algorithm validity (quick-check)', t => {
 	const inputGen = jsc.array(jsc.integer(0, 255))
 	const assertion = a => decode(encode(a)) !== a
 	t.true(jsc.check(jsc.forall(inputGen, assertion), {
