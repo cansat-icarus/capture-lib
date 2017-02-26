@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import ExponentialBackoff from '../../lib/backoff-wrapper'
-import {getRemoteDB} from '../../db'
+import {getRemoteDB} from '../../lib/db'
 
 export default class Replicator extends EventEmitter {
 
@@ -18,8 +18,6 @@ export default class Replicator extends EventEmitter {
 		this._backoff = new ExponentialBackoff()
 
 		this._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))
-
-		// TODO: better logging
 		this._backoff.on('backoff', (retry, delay) => this._log.debug('Backing off from replication', {retry, delay}))
 	}
 
