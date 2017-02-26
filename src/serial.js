@@ -235,7 +235,6 @@ export function listPorts() {
 	return new Promise(resolve => {
 		SerialPort.list((err, ports) => {
 			if (err) {
-				this._log.fatal(err, {ports})
 				return resolve([])
 			}
 
