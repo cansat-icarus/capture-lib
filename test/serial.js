@@ -267,3 +267,14 @@ test.serial('lists available ports', async t => {
 
 	__ResetDependency__('SerialPort')
 })
+
+test.serial('returns empty list of available ports when an error ocurrs', async t => {
+	__Rewire__('SerialPort', {
+		list: cb => cb('an error', [1, 2, 3])
+	})
+
+	const ports = await listPorts()
+	t.deepEqual(ports, [])
+
+	__ResetDependency__('SerialPort')
+})
