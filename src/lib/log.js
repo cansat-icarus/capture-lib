@@ -1,19 +1,16 @@
 import bunyan from 'bunyan'
 
 export default function createLogger(name, db) {
-	const bufferStream = new bunyan.RingBuffer({limit: 50})
+	const bufferStream = new bunyan.RingBuffer({limit: 30})
 	const dbStream = {
 		write: obj => {
 			// error and fatal items include more information
 			if (obj.level > 45) {
-				obj._context = bufferStream.records
+				obj.context = bufferStream.records
 			}
 
 			// save to db
 			db.post(obj)
-
-			// TODO: if it's an error, somehow pass the db document id (callback?)
-			//       Useful for notifications
 		}
 	}
 
@@ -32,14 +29,14 @@ export default function createLogger(name, db) {
 				count: 10 // Keep 10 log files
 			},
 			{
-				level: 'trace',
-				type: 'raw',
-				stream: bufferStream
-			},
-			{
 				level: 'info',
 				type: 'raw',
 				stream: dbStream
+			},
+			{
+				level: 'trace',
+				type: 'raw',
+				stream: bufferStream
 			}
 		]
 	})
