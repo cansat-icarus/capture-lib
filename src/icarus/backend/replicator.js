@@ -18,7 +18,10 @@ export default class Replicator extends EventEmitter {
 		this._backoff = new ExponentialBackoff()
 
 		this._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))
-		this._backoff.on('backoff', (retry, delay) => this._log.debug('Backing off from replication', {retry, delay}))
+		this._backoff.on('backoff', (retry, delay) => {
+			this._log.debug('Backing off from replication', {retry, delay})
+			this._updateState('connecting')
+		})
 	}
 
 	stop() {
@@ -64,10 +67,10 @@ export default class Replicator extends EventEmitter {
 			this.stop()
 		}
 
+		this._updateState('connecting')
+
 		// Create the DB object here to avoid memory leaks
 		this._targetDB = getRemoteDB(dbName, username, password)
-
-		this._updateState('connecting')
 
 		// Kick the process into action
 		return new Promise(resolve => {
