@@ -75,6 +75,6 @@ export function dataHandler(packet) {
 
 	// Save to DB
 	return this.db.put(packet)
-		.then(() => this._log.info('packet saved', {packet}))
+		.then(() => this._log.trace('packet saved', {packet}))
 		.catch(err => this._log.error(err))
 }
