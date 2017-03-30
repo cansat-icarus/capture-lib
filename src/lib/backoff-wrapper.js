@@ -18,12 +18,12 @@ export default class ExponentialBackoff extends EventEmitter {
 
 		this._strategy = new ExponentialBackoffStrategy({randomisationFactor: 0.3})
 		this._backoffNumber = 0
-		this._timeoutID = -1
+		this._timeoutID = undefined
 	}
 
 	backoff() {
 		// Backoff already in progress
-		if (this._timeoutID !== -1) {
+		if (this._timeoutID !== undefined) {
 			return
 		}
 		const delay = this._strategy.next()
@@ -32,7 +32,7 @@ export default class ExponentialBackoff extends EventEmitter {
 	}
 
 	_handleBackoff() {
-		this._timeoutID = -1
+		this._timeoutID = undefined
 		this.emit('retry', this._backoffNumber)
 		this._backoffNumber++
 	}
@@ -45,9 +45,9 @@ export default class ExponentialBackoff extends EventEmitter {
 		this._strategy.reset()
 
 		// Clear a possibly running timeout
-		if (this._timeoutID !== -1) {
+		if (this._timeoutID !== undefined) {
 			clearTimeout(this._timeoutID)
-			this._timeoutID = -1
+			this._timeoutID = undefined
 		}
 	}
 
