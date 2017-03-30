@@ -17,6 +17,7 @@ import packetHeuristicsConfig from './packet-heuristics'
 export default class Classifier extends EventEmitter {
 	/**
 	 * Constructor.
+	 * @param {Bunyan} logger Logger instance.
 	 */
 	constructor(logger) {
 		super()
@@ -36,7 +37,7 @@ export default class Classifier extends EventEmitter {
 
 		/**
 		 * Logger instance.
-		 * @type {Object}
+		 * @type {Bunyan}
 		 */
 		this._log = logger
 
@@ -50,7 +51,8 @@ export default class Classifier extends EventEmitter {
 	 * and simple heuristics(min/max value, variation between packets)(40%).
 	 * @param {Object} packet The packet to classify.
 	 * @param {Boolean} [updateStationClassification=true] Whether to update the station score.
-	 * @emits Classifier#stationScore(stationScore) When updateStationClassification is true, the station score is updated and the event is fired.
+	 * @emits stationScore(stationScore): when updateStationClassification is true, the station score is updated and the event is fired.
+	 * @returns {Number} Packet score.
 	 */
 	classifyPacket(packet, updateStationClassification = true) {
 		this._log.info('classifier.classifyPacket', {updateStationClassification})
@@ -114,7 +116,7 @@ export default class Classifier extends EventEmitter {
 	 * most recent packet).
 	 * @param {Number} packetScore The score of the previously unnacounted packet.
 	 * @returns {Number} New station score.
-	 * @emits Classifier#stationScore(stationScore) Because the station score was updated.
+	 * @emits stationScore(stationScore): because the station score was updated.
 	 */
 	classifyStationInc(packetScore) {
 		if (this.stationScore === undefined) {

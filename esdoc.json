@@ -6,7 +6,6 @@
   "unexportIdentifier": true,
   "undocumentIdentifier": true,
   "builtinExternal": true,
-  "index": "./README.md",
   "package": "./package.json",
   "coverage": true,
   "includeSource": true,
@@ -16,6 +15,8 @@
     "functionBind": true
   },
   "manual": {
+    "globalIndex": true,
+    "index": "./README.md",
     "changelog": ["./CHANGELOG.md"]
   },
   "lint": true

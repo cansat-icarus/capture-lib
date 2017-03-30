@@ -8,18 +8,26 @@ import Classifier from './classifier'
 import {parser, dataHandler} from './data-handler'
 
 // T-Minus Transceiver information
-/** T-Minus Transceiver Vendor ID */
+/**
+ * T-Minus Transceiver Vendor ID
+ * @const
+ */
 const tMinusVid = '0x03eb'
-/** T-Minus Transceiver Product ID */
+
+/**
+ * T-Minus Transceiver Product ID
+ * @const
+ */
 const tMinusPid = '0x2404'
 
 /**
  * Handles everything a Station should.
- * Brings Serial, data parsing and database saving together.
+ * Brings Serial, data parsing, database saving and the backend connection together.
  */
 export default class Station extends EventEmitter {
 	/**
 	 * Sets up all relevant class instances (Serial, parsers...) and events listeners.
+	 * @param {String} name Station name.
 	 */
 	constructor(name) {
 		super()
@@ -32,31 +40,37 @@ export default class Station extends EventEmitter {
 
 		/**
 		 * Database instance, internal to the station.
+		 * @type {PouchDB}
 		 */
 		this.db = getDB(`data-${name}`)
 
 		/**
 		 * Log database instance, internal to the station.
+		 * @type {PouchDB}
 		 */
 		this.logDB = getDB('log')
 
 		/**
 		 * Logger instance.
+		 * @type {Bunyan}
 		 */
 		this._log = createLogger(this.name, this.logDB)
 
 		/**
-		 * {@link Serial} instance with the {@link parser} attached
+		 * {@link Serial} instance with the {@link parser} attached.
+		 * @type {Serial}
 		 */
 		this.serial = new Serial(this._log.child({childId: 'station.serial'}), parser())
 
 		/**
 		 * {@link Classifier} instance.
+		 * @type {Classifier}
 		 */
 		this.classifier = new Classifier(this._log.child({childId: 'station.classifier'}))
 
 		/**
 		 * {@link Backend} connector instance.
+		 * @type {Backend}
 		 */
 		this.backend = new Backend(
 			this.name,

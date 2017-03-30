@@ -34,7 +34,6 @@ export function decode(input) {
 
 /**
  * Encodes a buffer in the quasi-binary format.
- * @experimental NOT IMPLEMENTED! DO NOT USE!
  * @param {Buffer} input Buffer to encode.
  * @return {Buffer} Encoded buffer.
  */

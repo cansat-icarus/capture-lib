@@ -12,15 +12,39 @@ Licensed under the MIT license.
 This is a very bare-bones version of the file above
 */
 
+/**
+ * A wrapper over the ExponentialBackoffStrategy from the backoff module.
+ */
 export default class ExponentialBackoff extends EventEmitter {
+	/**
+	 * Constructor.
+	 */
 	constructor() {
 		super()
 
+		/**
+		 * ExponentialBackoffStrategy instance.
+		 * @type {ExponentialBackoffStrategy}
+		 */
 		this._strategy = new ExponentialBackoffStrategy({randomisationFactor: 0.3})
+
+		/**
+		 * Number of previous failed attempts.
+		 * @type {Number}
+		 */
 		this._backoffNumber = 0
+
+		/**
+		 * Backoff timeout ID.
+		 * @type {TimeoutID}
+		 */
 		this._timeoutID = undefined
 	}
 
+	/**
+	 * Signals that we tried executing the protected routine and failed, or that we want to start the process.
+	 * @emits backoff(_backoffNumber, delay) delay is how much time will pass before we try executing the routine.
+	 */
 	backoff() {
 		// Backoff already in progress
 		if (this._timeoutID !== undefined) {
@@ -31,12 +55,19 @@ export default class ExponentialBackoff extends EventEmitter {
 		this.emit('backoff', this._backoffNumber, delay)
 	}
 
+	/**
+	 * Responsible for executing the routine protected by the backoff algorithm.
+	 * @emits retry(_backoffNumber) whose event listener should execute the routine.
+	 */
 	_handleBackoff() {
 		this._timeoutID = undefined
 		this.emit('retry', this._backoffNumber)
 		this._backoffNumber++
 	}
 
+	/**
+	 * Resets failed attempt number and cancels a possible pending action (routine execution after backoff).
+	 */
 	reset() {
 		// Reset number of backoffs
 		this._backoffNumber = 0
@@ -51,6 +82,12 @@ export default class ExponentialBackoff extends EventEmitter {
 		}
 	}
 
+	/**
+	 * Used to signal the routine was successful.
+	 * This resets the wrapper.
+	 * @emits success
+	 * @see {@link reset}
+	 */
 	success() {
 		// Reset state
 		this.reset()

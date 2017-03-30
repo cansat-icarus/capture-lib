@@ -6,8 +6,9 @@ import IcarusParser from './parser'
  * 'Transceiver MODE' Buffer for future comparison.
  * Helps ignoring messages from transceiver.
  * @private
- * TODO: check with the CanSat on: is this what we receive?
+ * @type {Buffer}
  */
+// TODO: check with the CanSat on: is this what we receive?
 const tmBuffer = Buffer.from('Transceiver MODE')
 
 /**
@@ -17,11 +18,13 @@ const tmBuffer = Buffer.from('Transceiver MODE')
 const packetParser = new IcarusParser()
 
 /**
+ * Creates and returns a "byteDelimiter" parser.
  * DISCLAIMER: It's a patched version of node-serialport's byteDelimiter parser.
  * You can find it's source here: https://github.com/EmergingTechnologyAdvisors/node-serialport/tree/master/lib/parsers.js
  * Changes from the original: trailing delimiters are removed, buffer passes through packetParser.parse before being emitted
  * and empty buffers and 'Transceiver MODE' messages are ignored.
  * Separates packets by a byte delimiter and passes them through {@link packetParser}
+ * @returns {Function} The parser itself
  */
 /*
 LICENSE OF THE ORIGINAL "byteDelimiter" parser:
@@ -76,6 +79,7 @@ export function parser() {
  * A handler for incoming {@link Serial#data}.
  * Saves packets to the local database.
  * Should be called bound to a {@link Station}.
+ * @param {Object} packet Packet to be parsed and saved.
  * @return {Promise} Resolves when all is done.
  */
 export function dataHandler(packet) {

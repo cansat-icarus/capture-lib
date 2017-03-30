@@ -2,20 +2,59 @@ import {EventEmitter} from 'events'
 import ExponentialBackoff from '../../lib/backoff-wrapper'
 import {getRemoteDB} from '../../lib/db'
 
+/**
+ * Handles replication between a local and remote PouchDB database.
+ * Keeps track of state, uses an {@link ExponentialBackoff} to prevent
+ * connection saturation, serving as a wrapper over PouchDB replication.
+ *
+ * The source database is set once in the constructor and remains unchanged
+ * and unchangeable during operation.
+ */
 export default class Replicator extends EventEmitter {
 
 	/**
 	 * @param {Logger} logger Bunyan logger instance.
-	 * @param {Function} emitter Callback used to handle replicator events.
-	 * @param {PouchDB} sourceDB The database to be replicated.
+	 * @param {PouchDB} sourceDB Database to be replicated.
 	 */
 	constructor(logger, sourceDB) {
 		super()
+
+		/**
+		 * Logger instance.
+		 * @type {Bunyan}
+		 */
 		this._log = logger
+
+		/**
+		 * Replicator status.
+		 * @type {String}
+		 */
 		this._state = 'inactive'
+
+		/**
+		 * Source database.
+		 * @type {PouchDB}
+		 */
 		this._sourceDB = sourceDB
 
+		/**
+		 * Target database.
+		 * @type {!PouchDB}
+		 */
+		this._targetDB = undefined
+
+		/**
+		 * ExponentialBackoff instance.
+		 * Keeps track of the replication backoff.
+		 * @type {ExponentialBackoff}
+		 */
 		this._backoff = new ExponentialBackoff()
+
+		/**
+		 * PouchDB replication instance/ID.
+		 * @type {!PouchDBReplicationID}
+		 */
+		this._replication = undefined
 
 		this._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))
 		this._backoff.on('backoff', (retry, delay) => {
@@ -24,6 +63,10 @@ export default class Replicator extends EventEmitter {
 		})
 	}
 
+	/**
+	 * Stops the replication process.
+	 * @emits state('inactive')
+	 */
 	stop() {
 		this._log.info('Stopping replication')
 		this._updateState('inactive')
@@ -33,6 +76,13 @@ export default class Replicator extends EventEmitter {
 		this._backoff.reset()
 	}
 
+	/**
+	 * Stops current replication and attempts last-minute replication.
+	 * Last-minute replication is done in "one-shot" mode: replicates whatever data it has
+	 * and immediately stops without listening for changes in the local database.
+	 * @emits state('cleanup')
+	 * @returns {Promise}
+	 */
 	async cleanup() {
 		// Before doing anything, stop!
 		this.stop()
@@ -55,6 +105,14 @@ export default class Replicator extends EventEmitter {
 		}
 	}
 
+	/**
+	 * Starts replication to a remote database.
+	 * @param {String} dbName Name/URL of the remote database.
+	 * @param {String} [username] Database username, if applicable.
+	 * @param {String} [password] Database password, if applicable.
+	 * @emits state(state): the state of the replicator.
+	 * @returns {Promise} resolved when the replication connection succeeds for the first time.
+	 */
 	replicate(dbName, username, password) {
 		// Don't try replicating when we're going away
 		if (this._state === 'cleanup') {
@@ -79,6 +137,10 @@ export default class Replicator extends EventEmitter {
 		})
 	}
 
+	/**
+	 * Restarts the replication process when unintentionally stopped.
+	 * @param {Number} retry Retry counter
+	 */
 	_ensureReplication(retry) {
 		// Don't re-create a replicator that is not meant to be
 		if (this._state === 'inactive' || this._state === 'cleanup' || !this._targetDB) {
@@ -121,6 +183,14 @@ export default class Replicator extends EventEmitter {
 			})
 	}
 
+	/**
+	 * Creates a new PouchDB replicator.
+	 * Remember that this class is simply a wrapper.
+	 * @param {Object} [opts] PouchDB replication options.
+	 * @param {Boolean} [opts.live=true] Keep the replication running, pushing changes as they happen.
+	 * @param {Boolean} [opts.retry=false] Enable PouchDB's built-in backoff algorithm.
+	 * @returns {PouchDBReplicationID}
+	 */
 	_createReplicator(opts = {live: true, retry: false}) {
 		return this._sourceDB.replicate.to(
 			this._targetDB,
@@ -128,6 +198,12 @@ export default class Replicator extends EventEmitter {
 		)
 	}
 
+	/**
+	 * Updates the Replicator's {@link Replicator#_state}.
+	 * @param {String} state New state.
+	 * @param {Object} [moreLogData] Extra data to be included in the log.
+	 * @emits state(state)
+	 */
 	_updateState(state, moreLogData) {
 		this._log.info('updateState', moreLogData, {state})
 		this._state = state

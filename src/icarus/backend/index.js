@@ -7,10 +7,21 @@ import Replicator from './replicator'
 
 /**
  * Handles connection with the backend.
+ *
+ * Responsible for establishing a WebSocket (socket.io) connection with
+ * the backend and handling its requests.
+ *
+ * It also instantiates {@link Replicator} instances for data and log
+ * replication. The stateChange events from these are forwarded as:
+ * "replicator:data:state" and "replicator:log:state".
  */
 export default class Backend extends EventEmitter {
 	/**
 	 * Constructor.
+	 * @param {String} name Station name.
+	 * @param {Bunyan} logger Logger instance.
+	 * @param {PouchDB} dataDB Packet database.
+	 * @param {PouchDB} logDB Log entries database.
 	 */
 	constructor(name, logger, dataDB, logDB) {
 		super()
@@ -35,7 +46,7 @@ export default class Backend extends EventEmitter {
 
 		/**
 		 * Logger instance.
-		 * @type {Object}
+		 * @type {Bunyan}
 		 */
 		this._log = logger
 
@@ -67,7 +78,7 @@ export default class Backend extends EventEmitter {
 	/**
 	 * Connects to backend at [url].
 	 * @param {String} url Backend URL.
-	 * @emits Station#backend:state(socketState) When socket connects/disconnects.
+	 * @emits state(socketState): socket connection/disconnection.
 	 */
 	connect(url) {
 		this._log.info('connect to', url)
@@ -97,10 +108,14 @@ export default class Backend extends EventEmitter {
 
 	/**
 	 * Disconnects from the backend. Stops the socket.
-	 * @emits Station#backend:state(socketState) When socket connects/disconnects.
+	 * The replicators will keep running until a new connection makes them
+	 * connect to a different database.
+	 * @emits state(socketState): socket connection/disconnection.
 	 */
 	disconnect() {
 		this._log.info('backend.disconnect')
+
+		// TODO: warn disconnection through socket (soft disconnection)
 
 		// Disconnect socket to stop reconnection logic
 		this._socket.disconnect()
@@ -108,15 +123,16 @@ export default class Backend extends EventEmitter {
 		// Finally remove the socket reference here
 		this._socket = null
 
-		// TODO: stop replicators
-		// TODO: warn disconnection through socket
+		// no need to stop replicators, they're harmless
+		// if you need them gone, disconnect from the internet
 
 		this._updateState('inactive')
 	}
 
 	/**
-	 * Closes any connections made to get ready for exit.
-	 * Correctly signals shutdown to the backend.
+	 * Triggers {@link Replicator#cleanup} on the data and log replicators.
+	 * @emits state('cleanup')
+	 * @returns {Promise}
 	 */
 	async cleanup() {
 		this._log.info('backend.cleanup')
@@ -134,9 +150,9 @@ export default class Backend extends EventEmitter {
 	/**
 	 * Updates the socket state.
 	 * @protected
-	 * @param {String} state The new Backend state.
-	 * @param {Object} extraData Extra data related to the new state (error, no. of connection attempts...) to be included in logs.
-	 * @emits Station#backend:state(socketState) When socket connects/disconnects.
+	 * @param {String} state New Backend state.
+	 * @param {Object} [extraData] Extra data related to the new state (error, no. of connection attempts...) to be included in logs.
+	 * @emits state(socketState): socket connection/disconnection.
 	 */
 	_updateState(state, extraData) {
 		this._log.info('updateState', state, extraData)
