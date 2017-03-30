@@ -120,6 +120,7 @@ export default class Backend extends EventEmitter {
 	 */
 	async cleanup() {
 		this._log.info('backend.cleanup')
+		this._updateState('cleanup')
 
 		// Cleanup replicators
 		await Promise.all([
