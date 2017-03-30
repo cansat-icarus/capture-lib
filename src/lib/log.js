@@ -30,7 +30,7 @@ export default function createLogger(name, db) {
 				type: 'rotating-file',
 				path: `CanSatGS-${name}.log`,
 				period: '3h', // New log file at every 3h
-				count: 10 // Keep 10 log files
+				count: 40 // Keep 40 log files
 			},
 			{
 				level: 'info',
