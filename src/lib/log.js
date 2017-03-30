@@ -5,8 +5,12 @@ export default function createLogger(name, db) {
 	const dbStream = {
 		write: obj => {
 			// error and fatal items include more information
-			if (obj.level > 45) {
-				obj.context = bufferStream.records
+			if (obj.level >= 40) {
+				// Sometimes, the current object may already be in the bufferStream
+				// To prevent a cyclic dependency, let's filter it out
+				const context = bufferStream.records.filter(record => record !== obj)
+
+				obj.context = context
 			}
 
 			// save to db
