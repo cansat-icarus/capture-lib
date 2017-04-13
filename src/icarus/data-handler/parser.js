@@ -50,21 +50,54 @@ export default class IcarusParser extends Parser {
 			// Now the packet counter, timestamps and alike
 			this.readUInt('counter', 4)
 			this.readUInt('sentAt.millis', 4)
-			// this.readUInt('sentAt.unix', 4) // Not yet as of now
+			this.readUInt('sentAt.unix', 4) // Not yet as of now
 
 			// Generate the packet ID
-			this.packet._id = this.packet.counter
+			this.packet._id = String(this.packet.counter)
 		}
 
 		switch (this.packet.type) {
 			case 't':
-				// 2x DS18B20 temperature sensors
+				// Temperature
 				this.readInt('temp.0', 2, conv.DS18B20)
 				this.readInt('temp.1', 2, conv.DS18B20)
 
-				// 2x MPX4115A temperature sensors
+				// Pressure
 				this.readInt('press.0', 2, conv.MPX4115A)
 				this.readInt('press.1', 2, conv.MPX4115A)
+
+				// GPS data
+				this.readUInt('gps.flags', 1, conv.gpsFlags)
+
+				// GPS Latitude
+				this.readUInt('gps.lat.deg', 2)
+				this.readUInt('gps.lat.billionths', 4)
+				this.setValue('gps.lat', this.packet.gps.lat, conv.gpsCoordinate)
+				if (this.packet.gps.flags.latSign) {
+					// The sign bit is true = the value the negative
+					this.packet.gps.lat *= -1
+				}
+
+				// GPS Longitude
+				this.readUInt('gps.lng.deg', 2)
+				this.readUInt('gps.lng.billionths', 4)
+				this.setValue('gps.lng', this.packet.gps.lng, conv.gpsCoordinate)
+				if (this.packet.gps.flags.lngSign) {
+					// The sign bit is true = the value the negative
+					this.packet.gps.lng *= -1
+				}
+
+				this.readInt('gps.speed', 4, conv.gpsSpeed)
+				this.readInt('gps.course', 4, conv.gpsCourse)
+				this.readInt('gps.altitude', 4, conv.gpsAltitude)
+
+				// Acceleration
+				this.readInt('accel.0.x', 2, conv.LIS331HH_24G)
+				this.readInt('accel.0.y', 2, conv.LIS331HH_24G)
+				this.readInt('accel.0.z', 2, conv.LIS331HH_24G)
+				this.readInt('accel.1.x', 2, conv.LIS331HH_24G)
+				this.readInt('accel.1.y', 2, conv.LIS331HH_24G)
+				this.readInt('accel.1.z', 2, conv.LIS331HH_24G)
 				break
 			case 'i':
 				// Message code and interpretation
