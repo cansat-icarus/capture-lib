@@ -40,10 +40,10 @@ test.serial('splits packets on [254, 255]', t => {
 
 	// Just send them in pieces and expect things to happen
 	parse(mockEmitter(-1), Buffer.from(packets[0].slice(0, 4)))
-	parse(mockEmitter(0), Buffer.from([packets[0][4], 254, 255, packets[1][0]])) // should emit packet #0
+	parse(mockEmitter(0), Buffer.from([packets[0][4], 254, 255, packets[1][0]])) // Should emit packet #0
 	parse(mockEmitter(-1), Buffer.from(packets[1].slice(1, 3)))
-	parse(mockEmitter(1), Buffer.from([packets[1][4], 254, 255])) // should emit packet #1
-	parse(mockEmitter(2), Buffer.from(packets[2])) // should emit packet #2
+	parse(mockEmitter(1), Buffer.from([packets[1][4], 254, 255])) // Should emit packet #1
+	parse(mockEmitter(2), Buffer.from(packets[2])) // Should emit packet #2
 })
 
 test.serial.cb('passes packets through IcarusParser', t => {
@@ -154,7 +154,7 @@ test('handles packets of unknown type', t => {
 	})
 
 	// Do things
-	t.plan(4) // we need 4 assertions
+	t.plan(4) // We need 4 assertions
 	return ctx::dataHandler(samplePacket)
 })
 
@@ -177,6 +177,6 @@ test('handles packets of known types', t => {
 	})
 
 	// Do things
-	t.plan(2) // we need 1 assertion
+	t.plan(2) // We need 2 assertions
 	return ctx::dataHandler(samplePacket)
 })

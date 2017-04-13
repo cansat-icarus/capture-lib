@@ -24,7 +24,6 @@ export function MPX4115A(raw) {
 	return ((raw / 1024.0) + 0.095) / 0.0009 // TODO: confirm value, worked last year
 }
 
-
 export function LIS331HH_24G(raw) {
 	// 12 mG/digit according to datasheet
 	// 1G = 9.80665 m/s^2 according to the International Service of Weights and Measures (2006 ISBN: 92-822-2213-6)

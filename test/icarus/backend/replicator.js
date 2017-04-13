@@ -31,7 +31,7 @@ test.before(() => Replicator.__Rewire__('getRemoteDB', spyGetFakeDB))
 
 // And remove it when we're done
 test.after.always(() => {
-	// spyGetFakeDB.restore() // for some reason .restore does not exist? (while other sinon methods like reset do)
+	// For some reason `spyGetFakeDB.restore()` does not exist? (while other sinon methods like reset do)
 	Replicator.__ResetDependency__('getRemoteDB')
 })
 
@@ -68,7 +68,7 @@ test.serial('replicates', async t => {
 	t.truthy(replicator._replication)
 
 	// Cleanup spies
-	// spyGetFakeDB is cleaned up in test.after.always()
+	// `spyGetFakeDB` is cleaned up in test.after.always()
 	spyUpdateState.restore()
 })
 
@@ -76,7 +76,7 @@ test.serial('does not replicate during cleanup', async t => {
 	const replicator = createReplicator()
 
 	// Spy what DBs we try to load
-	spyGetFakeDB.reset() // make sure we're not getting bad data
+	spyGetFakeDB.reset() // Make sure we're not getting bad data
 
 	// Set the replicator's state to cleanup
 	replicator._state = 'cleanup'
@@ -112,7 +112,7 @@ test('stops replication before cleanup', async t => {
 	// Call cleanup
 	await replicator.cleanup()
 
-	// replicator.stop should have been called
+	// Replicator.stop should have been called
 	t.true(spyStop.called)
 })
 

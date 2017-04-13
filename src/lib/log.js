@@ -19,7 +19,7 @@ export default function createLogger(name, db) {
 	const bufferStream = new bunyan.RingBuffer({limit: 30})
 	const dbStream = {
 		write: obj => {
-			// error and fatal items include more information
+			// Error and fatal items include more information
 			if (obj.level >= 40) {
 				// Sometimes, the current object may already be in the bufferStream
 				// To prevent a cyclic dependency, let's filter it out
@@ -28,7 +28,7 @@ export default function createLogger(name, db) {
 				obj.context = context
 			}
 
-			// save to db
+			// Save to db
 			db.post(obj)
 		}
 	}

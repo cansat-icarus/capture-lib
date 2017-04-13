@@ -47,7 +47,7 @@ test('gracefully handles decoder errors', t => {
 	const packet = t.context.parser.parse(badPacket2)
 
 	t.is(packet.type[0], '?')
-	t.true(packet.raw instanceof Array)
+	t.true(Array.isArray(packet.raw))
 	t.is(typeof packet.receivedAt, 'number')
 	t.truthy(packet.error)
 })
@@ -56,7 +56,7 @@ test('handles unknown packet types', t => {
 	const packet = t.context.parser.parse(badPacket1)
 
 	t.is(packet.type[0], '?')
-	t.true(packet.raw instanceof Array)
+	t.true(Array.isArray(packet.raw))
 	t.is(typeof packet.receivedAt, 'number')
 	t.falsy(packet.error)
 })
@@ -65,7 +65,7 @@ test('handles telemetry packets', t => {
 	const packet = t.context.parser.parse(telemetryPacket)
 
 	t.is(packet.type, 't')
-	t.true(packet.raw instanceof Array)
+	t.true(Array.isArray(packet.raw))
 	t.is(typeof packet.receivedAt, 'number')
 	t.falsy(packet.error)
 	t.is(packet.counter, 12)
@@ -81,7 +81,7 @@ test('handles information packets', t => {
 	const packet = t.context.parser.parse(infoPacket)
 
 	t.is(packet.type, 'i')
-	t.true(packet.raw instanceof Array)
+	t.true(Array.isArray(packet.raw))
 	t.is(typeof packet.receivedAt, 'number')
 	t.falsy(packet.error)
 	t.is(packet.counter, 12)
@@ -95,7 +95,7 @@ test('handles settings packets', t => {
 	const packet = t.context.parser.parse(settingsPacket)
 
 	t.is(packet.type, 's')
-	t.true(packet.raw instanceof Array)
+	t.true(Array.isArray(packet.raw))
 	t.is(typeof packet.receivedAt, 'number')
 	t.falsy(packet.error)
 	t.is(packet.counter, 12)

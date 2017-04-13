@@ -123,7 +123,7 @@ export default class Backend extends EventEmitter {
 		// Finally remove the socket reference here
 		this._socket = null
 
-		// no need to stop replicators, they're harmless
+		// No need to stop replicators, they're harmless
 		// if you need them gone, disconnect from the internet
 
 		this._updateState('inactive')

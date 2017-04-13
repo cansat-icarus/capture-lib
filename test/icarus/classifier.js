@@ -47,12 +47,12 @@ test('classifyPacket() heuristics are 40% of the total score', t => {
 	// The score should be the expected 100
 	t.is(t.context.classifier.classifyPacket(samplePacket), 100)
 
-	// make heuristics fail, should drop to 60
+	// Make heuristics fail, should drop to 60
 	samplePacket.field = false
 	samplePacket.otherField = false
 	t.is(t.context.classifier.classifyPacket(samplePacket), 60)
 
-	// make half the heuristics fail, half succeed, score should be 80
+	// Make half the heuristics fail, half succeed, score should be 80
 	samplePacket.field = true
 	t.is(t.context.classifier.classifyPacket(samplePacket), 80)
 
@@ -106,7 +106,7 @@ test('classifyPacket() updates station classification when it should', t => {
 
 	// Now ask the classifier not to update the station score
 	t.context.classifier.classifyPacket(samplePacket1, false)
-	t.is(t.context.classifier.stationScore, 50) // should remain 50
+	t.is(t.context.classifier.stationScore, 50) // Should remain 50
 })
 
 test('classifyPacket() incrementally stores packet data in classifier._lastData', t => {
