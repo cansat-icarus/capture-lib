@@ -82,6 +82,14 @@ export default class Station extends EventEmitter {
 		// Handle incoming packets
 		this.serial.on('data', this::dataHandler)
 
+		// The transceiver needs a bit of a kick sometimes
+		this.serial.on('stateChange', state => {
+			if (state === 'open') {
+				// Send something!
+				this.serial._port.write('hi there')
+			}
+		})
+
 		this._log.info('station.construct end')
 	}
 
