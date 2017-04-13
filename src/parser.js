@@ -54,7 +54,7 @@ export default class Parser {
 	 */
 	parse(rawPacket) {
 		// Change the current packet
-		this._raw = rawPacket.slice(0, rawPacket.length - 4)
+		this._raw = rawPacket
 
 		// Reset state thingies
 		this._i = 0
@@ -62,7 +62,7 @@ export default class Parser {
 
 		// Calculate CRC
 		this.setValue('crc.sent', rawPacket[`readUInt${this.endianess}`](rawPacket.length - 4, 4).toString(16))
-		this.setValue('crc.local', crc32(this._raw).toString(16))
+		this.setValue('crc.local', crc32(rawPacket.slice(0, rawPacket.length - 4)).toString(16))
 
 		// More parsing reserved to subclass
 		return this.packet // Just to behave as the Docs say it will
