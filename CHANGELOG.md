@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v1.0.3] - 2017-4-14
+No changes to the code. Just changing the package name to be scoped (in @cansat-icarus).
+Last patch version containing nothing. I hope.
+
 ## [v1.0.2] - 2017-4-14
 No changes to the code. Just removing the private mark of our package.json so we can publish this in npm.
 
@@ -88,8 +92,9 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.2...HEAD
-[v1.0.1]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.2...v1.0.1
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.3...HEAD
+[v1.0.3]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.3...v1.0.2
+[v1.0.2]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.2...v1.0.1
 [v1.0.1]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.1...v1.0.0
 [v1.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.3.0...v1.0.0
 [v0.3.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.1...v0.3.0
