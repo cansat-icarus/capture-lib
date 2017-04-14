@@ -1,9 +1,11 @@
 # CanSat Data Capture library
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/cansat-icarus/capture-lib.svg)](https://greenkeeper.io/)
+[![Greenkeeper badge][greenkeeper-image]][greenkeeper-url]
+[![Dependency Status][david-image]][david-url]
 [![Build Status][travis-image]][travis-url]
+[![Build status][appveyor-image]][appveyor-url]
 [![Codecov Status][codecov-image]][codecov-url]
-[![Dependency Status][depstat-image]][depstat-url]
+[![Codacy Badge][codacy-image]][codacy-url]
 > Does anything the groundstation can! To use it in a real world scenario wrap it for a specific platform/use case or use a pre-built wrapper.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -123,11 +125,20 @@ Some advice for a good pull request:
 
 MIT © 2016 [André Breda](https://github.com/addobandre)
 
+[greenkeeper-url]: https://greenkeeper.io/
+[greenkeeper-image]: https://badges.greenkeeper.io/cansat-icarus/capture-lib.svg
+
 [travis-url]: https://travis-ci.org/cansat-icarus/capture-lib
 [travis-image]: https://img.shields.io/travis/cansat-icarus/capture-lib.svg?style=flat
 
-[codecov-url]: https://codecov.io/github/cansat-icarus/capture-lib
-[codecov-image]: https://img.shields.io/codecov/c/github/cansat-icarus/capture-lib.svg?style=flat
+[appveyor-url]: https://ci.appveyor.com/project/addobandre/capture-lib
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/2ntc9xapqs6a315l?svg=true
 
-[depstat-url]: https://david-dm.org/cansat-icarus/capture-lib
-[depstat-image]: https://david-dm.org/cansat-icarus/capture-lib.svg?style=flat
+[codecov-url]: https://codecov.io/github/cansat-icarus/capture-lib
+[codecov-image]: https://codecov.io/gh/cansat-icarus/capture-lib/branch/master/graph/badge.svg
+
+[codacy-url]: https://www.codacy.com/app/addobandre/capture-lib?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cansat-icarus/capture-lib&amp;utm_campaign=Badge_Grade
+[codacy-image]: https://api.codacy.com/project/badge/Grade/9eb60377b5494b868542b3a788fc53e6
+
+[david-url]: https://david-dm.org/cansat-icarus/capture-lib
+[david-image]: https://david-dm.org/cansat-icarus/capture-lib.svg?style=flat
