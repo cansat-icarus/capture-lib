@@ -33,6 +33,9 @@ script:
   - nyc report --reporter=lcov > coverage.lcov && codecov
   - nyc report --reporter=text-lcov | codacy-coverage
 
+before_deploy:
+  - yarn run docs # Generate docs
+
 deploy:
   # Deploy to npm when new version is good
   - provider: npm
