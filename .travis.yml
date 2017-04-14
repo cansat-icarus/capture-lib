@@ -30,7 +30,7 @@ before_install:
 script:
   - yarn run build # Transpile
   - yarn run test # Generate coverage report and test things
-  - nyc report --reporter=text-lcov | codecov
+  - nyc report --reporter=lcov > coverage.lcov && codecov
   - nyc report --reporter=text-lcov | codacy-coverage
 
 deploy:
