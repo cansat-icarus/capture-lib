@@ -1,7 +1,6 @@
 {
   "name": "capture-lib",
-  "version": "1.0.1",
-  "private": true,
+  "version": "1.0.2",
   "main": "dist/index.js",
   "jsnext:main": "src/index.js",
   "module": "src/index.js",
