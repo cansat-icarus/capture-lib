@@ -58,6 +58,11 @@ export default class Replicator extends EventEmitter {
 
 		this._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))
 		this._backoff.on('backoff', (retry, delay) => {
+			// Don't signal we're connecting if we're inactive
+			if (this._state === 'inactive' || this._state === 'cleanup') {
+				return
+			}
+
 			this._log.debug('Backing off from replication', {retry, delay})
 			this._updateState('connecting')
 		})
