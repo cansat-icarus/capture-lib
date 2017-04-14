@@ -6,6 +6,7 @@
 [![Build status][appveyor-image]][appveyor-url]
 [![Codecov Status][codecov-image]][codecov-url]
 [![Codacy Badge][codacy-image]][codacy-url]
+[![Commitizen friendly][commitizen-image]][commitizen-url]
 > Does anything the groundstation can! To use it in a real world scenario wrap it for a specific platform/use case or use a pre-built wrapper.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -118,7 +119,7 @@ Some advice for a good pull request:
 - **Run the unit tests** before committing.
 - If the tests fail, and you're doing it on purpose, you better have a good explanation! Having a valid reason, change the unit tests to what they should be.
 - Besides writing unit tests, make sure to **document** any new features and changes to normal behavior.
-- Short, informative commit messages are good. See [here](http://chris.beams.io/posts/git-commit/) why they matter and how to write good ones.
+- Short, informative commit messages are good. See [here](http://chris.beams.io/posts/git-commit/) why they matter and how to write good ones. [Commitizen][commitizen-url] can help you stick to our commit message style.
 
 
 ## License
@@ -142,3 +143,6 @@ MIT © 2016 [André Breda](https://github.com/addobandre)
 
 [david-url]: https://david-dm.org/cansat-icarus/capture-lib
 [david-image]: https://david-dm.org/cansat-icarus/capture-lib.svg?style=flat
+
+[commitizen-url]: http://commitizen.github.io/cz-cli/
+[commitizen-image]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg
