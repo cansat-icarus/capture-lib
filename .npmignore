@@ -1,0 +1,8 @@
+node_modules
+coverage
+.nyc_output
+docs
+test
+
+// src is published, in case people start using the "jsnext:main" or "module" fields in package.json
+// dist is published, because we transpile things
