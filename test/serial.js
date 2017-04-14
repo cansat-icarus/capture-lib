@@ -182,10 +182,10 @@ test('_destroyPort() destroys a closed port', async t => {
 
 test('_destroyPort() does not crash when there is no port to destroy [BUGFIX]', async t => {
 	// Just destroy the port multiple times and ava will check for exceptions
-	await t.context.serial._destroyPort()
-	await t.context.serial._destroyPort()
-	await t.context.serial._destroyPort()
-	await t.context.serial._destroyPort()
+	await t.notThrows(() => t.context.serial._destroyPort())
+	await t.notThrows(() => t.context.serial._destroyPort())
+	await t.notThrows(() => t.context.serial._destroyPort())
+	await t.notThrows(() => t.context.serial._destroyPort())
 })
 
 test('_createPort() creates a port if it does not exist', async t => {
