@@ -1,15 +1,12 @@
-sudo: false # Stop any possible warning from Travis CI
-
-# OS-agnostic, no action required
+sudo: false # Stop annoying sudo warnings from travis
 
 language: node_js
 node_js:
-  - v6 # Latest known Stable
-  - v4 # LTS
-  # No support for old 0.* versions (at the time of writing we should support them
-  # but at the time of publishing they will almost certainly be discontinued - mid-2017)
+  - v7 # Current
+  - v6 # LTS
+# - v4 # Maintentance, not used by our version of Electron
 
-# Native module support (serialport may need it)
+# Native module support
 # We need a C++11 compiler
 env:
   - CXX=g++-4.8
@@ -20,10 +17,39 @@ addons:
     packages:
       - g++-4.8
 
-# Prepare for code coverage generation and reporting
-before_install: npm install codecov nyc
+cache:
+  yarn: true
+  directories:
+    - node_modules
 
-# Now do it!
+# Install what is needed for uploading coverage
+before_install:
+  - yarn global add codacy-coverage codecov
+
+# Now test things
 script:
-  - npm run coverage # Generate coverage report and test things
-  - nyc report --reporter=text-lcov | codecov # Publish coverage data
+  - yarn run build # Transpile
+  - yarn run test # Generate coverage report and test things
+  - nyc report --reporter=text-lcov | codecov
+  - nyc report --reporter=text-lcov | codacy-coverage
+
+deploy:
+  # Deploy to npm when new version is good
+  - provider: npm
+    skip_cleanup: true
+    email: $NPM_EMAIL
+    api_key: $NPM_API_KEY
+    on:
+      branch: master
+      tags: true
+      node: 6
+
+  # Update docs when new version is good
+  - provider: pages
+    skip_cleanup: true
+    github_token: $GITHUB_TOKEN
+    local_dir: docs
+    on:
+      branch: master
+      tags: true
+      node: 6
