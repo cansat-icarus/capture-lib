@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ## [v1.0.0] - 2017-04-14
+### Tested configurations
+Basic packet reception was tested and is working.
+Backend-related code will be tested in the next few weeks.
+
 ### Added
 - Backend connection logic and data/log db replication. (4eb02e79aa9bae70df6e5860bdc91b3f8831712d, 1bfb9fac2912718488e7d45c12d0d2078bf45ed3)
 - API method: listPorts (in ./serial.js), a wrapper around SerialPort.list that extracts hardware IDs in Windows. (905624d2e6e2f499f71df4102d5b52b208d3a5ad)
