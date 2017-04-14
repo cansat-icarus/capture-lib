@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - API method: Station#cleanup, calls Serial#close and Backend#cleanup; returns a Promise. (f41fcaca18b43ce60c7ed018eea02b6077c931ef)
 - Serial now emits a "pathChange" event, whenever Serial#_path is changed. (c17248085ba3654583dc1274e45a79603c69534c)
 - API method: encode (in quasi-binary.js), a quasi-binary encoder. (33d3e6bd0ec982f25ae00a4b22eef4e3883c7265)
-
+- **BREAKING**: Missing fields from CanSat packets (unix timestamp, gps data, acceleration). (89a116c6ca4a52eb3071815fbaf0fa4985e0ad42)
 
 ### Changed
 - **BREAKING**: "Serial" event names have changed for coherency with the rest of the codebase: (0a371e32f9374e7282c7fbba83c18d96bde7a8b6)
@@ -24,13 +24,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **BREAKING**: Station constructor now requires a name (a6a9b01ca1658d65baabcb0ce8a775bd4c4318a9)
 - CanSat information packets message strings were shortened (88bd67253a973e9789b61c955f69347be7eab4c9)
 - yarn is now used for (deterministic) dependency management. (f1c5f07bf88753ffbc7ea69fa54a6c4758e7fc01)
--
+- "Packet saved" log messages are now log level trace. (e54530bcc0893e55315dc8b5fd28ffece5e8b743)
+- We now keep 40 log files (instead of 10). (57edbb9d55cc20b641c0f52e280f6f1ca9ed2de6)
 
 ### Fixes
 - Remove unused (but ignored, so things would never work) parameter in the minmaxH packet heuristic (silent fix included in f7b0d2b98448b5ec193659f31439f1bb325d406a)
 - Serial#_destroyPort no longer tries to destroy ports that do not exist. (d93e342d7543f8f3c571049ebfb10162ad2632cd)
 - Serial.listPorts no longer logs (it's static, therefore it had no access to the logger). (7e97b537d4beb0ebb5159cb87ca07a7fbaaba31f)
 - Don't pass objects with circular references to PouchDB when saving error logs (a42201e4bd52e15ac237b187a33323edddff484a, b8d83db0dc4340f6af5ca4bbd044a57ac1ebcbba)
+- packet.raw now includes the CRC, allowing the field to really be the full raw packet as it was sent. (ab2e1e1d74f1fcc3b92d3907367c9906d453c488)
+- packet._id is now a string, like PouchDB requires. (89a116c6ca4a52eb3071815fbaf0fa4985e0ad42)
+- Write a few bytes to the transceiver to make it work after opening the SerialPort. (b152050a5fa8ab43bb3e90e5a03900fce59ca6a2)
 
 ## [v0.3.0] - 2016-08-14
 ### Tested configurations
