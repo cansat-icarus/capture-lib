@@ -42,7 +42,7 @@ deploy:
     on:
       branch: master
       tags: true
-      node: 6
+      node: 6 # The version we use in electron
 
   # Update docs when new version is good
   - provider: pages
@@ -52,4 +52,4 @@ deploy:
     on:
       branch: master
       tags: true
-      node: 6
+      node: 6 # The version we use in electron
