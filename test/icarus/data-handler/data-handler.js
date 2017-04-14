@@ -12,9 +12,9 @@ test.serial('splits packets on [254, 255]', t => {
 	})
 
 	const packets = [
-		[23, 14, 125, 203, 45, 253],
-		[253, 253, 123, 134, 39, 0],
-		[143, 23, 44, 0, 0, 240]
+		[23, 14, 125, 203, 45, 253, 123, 123],
+		[253, 253, 123, 134, 39, 0, 132, 123],
+		[143, 23, 44, 0, 0, 240, 123, 123]
 	]
 
 	const parse = parser()
@@ -39,11 +39,13 @@ test.serial('splits packets on [254, 255]', t => {
 	}
 
 	// Just send them in pieces and expect things to happen
-	parse(mockEmitter(-1), Buffer.from(packets[0].slice(0, 4)))
-	parse(mockEmitter(0), Buffer.from([packets[0][4], 254, 255, packets[1][0]])) // Should emit packet #0
-	parse(mockEmitter(-1), Buffer.from(packets[1].slice(1, 3)))
-	parse(mockEmitter(1), Buffer.from([packets[1][4], 254, 255])) // Should emit packet #1
-	parse(mockEmitter(2), Buffer.from(packets[2])) // Should emit packet #2
+	t.plan(3)
+	parse(mockEmitter(-1), Buffer.from([254, 255]))
+	parse(mockEmitter(-1), Buffer.from(packets[0].slice(0, packets[0].length - 1)))
+	parse(mockEmitter(0), Buffer.from([packets[0][packets[0].length - 1], 254, 255, packets[1][0]])) // Should emit packet #0
+	parse(mockEmitter(-1), Buffer.from(packets[1].slice(1, packets[1].length - 1)))
+	parse(mockEmitter(1), Buffer.from([packets[1][packets[1].length - 1], 254, 255])) // Should emit packet #1
+	parse(mockEmitter(2), Buffer.from([...packets[2], 254, 255])) // Should emit packet #2
 })
 
 test.serial.cb('passes packets through IcarusParser', t => {
