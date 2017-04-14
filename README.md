@@ -1,4 +1,6 @@
 # CanSat Data Capture library
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/cansat-icarus/capture-lib.svg)](https://greenkeeper.io/)
 [![Build Status][travis-image]][travis-url]
 [![Codecov Status][codecov-image]][codecov-url]
 [![Dependency Status][depstat-image]][depstat-url]
