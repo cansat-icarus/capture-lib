@@ -1,14 +1,13 @@
 /**
  * Heuristic creation helper.
  * Fails when value leaves a certain interval: [min, max].
- * @param {String} field The object path for the field to be tested.
  * @param {Number} min Minimum value.
  * @param {Number} max Maximum value.
  * @returns {Function} The heuristic function.
  * @private
  */
-function minmaxH (field, min, max) {
-  return val => val >= min && val <= max
+function minmaxH(min, max) {
+	return val => val >= min && val <= max
 }
 
 /**
@@ -18,8 +17,8 @@ function minmaxH (field, min, max) {
  * @returns {Function} The heuristic function.
  * @private
  */
-function variationH (variation) {
-  return (val, lastVal) => Math.abs(val - lastVal) <= variation
+function variationH(variation) {
+	return (val, lastVal) => Math.abs(val - lastVal) <= variation
 }
 
 /**
@@ -27,7 +26,7 @@ function variationH (variation) {
  * Format: [ [...fields], [...heuristics] ].
  */
 export default new Map([
-  [['counter', 'sentAt.millis'], [variationH(1)]],
-  [['temp.0', 'temp.1'], [minmaxH(10, 37), variationH(10)]],
-  [['press.0', 'press.1'], [minmaxH(0, 2000), variationH(100)]]
+	[['counter', 'sentAt.millis'], [variationH(1)]],
+	[['temp.0', 'temp.1'], [minmaxH(10, 37), variationH(10)]],
+	[['press.0', 'press.1'], [minmaxH(0, 2000), variationH(100)]]
 ])

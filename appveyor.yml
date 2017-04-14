@@ -1,0 +1,28 @@
+# Test against the latest version of this Node.js version
+environment:
+  matrix:
+    - nodejs_version: "7" # Current
+    - nodejs_version: "6" # LTS
+#   - nodejs_version: "4" # Maintentance, not used by our version of Electron
+
+# Cache yarn for speed
+cache:
+  - "%LOCALAPPDATA%\\Yarn"
+
+# Install scripts. (runs after repo cloning)
+install:
+  # Get the latest stable version of Node.js or io.js
+  - ps: Install-Product node $env:nodejs_version x64
+  # Install modules
+  - yarn install
+
+# Post-install test scripts
+test_script:
+  # Output useful info for debugging
+  - node --version
+  - yarn --version
+  # Run tests
+  - yarn test
+
+# Don't actually build, only testing is required.
+build: off
