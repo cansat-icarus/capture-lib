@@ -16,7 +16,7 @@ test('parse() resets state', t => {
 
 	t.context.parser.parse(t.context.buf)
 	t.is(t.context.parser._i, 0)
-	t.true(t.context.parser._raw.equals(t.context.buf.slice(0, 16)))
+	t.true(t.context.parser._raw.equals(t.context.buf))
 	t.deepEqual(t.context.parser.packet, {crc: {sent: '0', local: crc32(Buffer.alloc(16)).toString(16)}})
 })
 

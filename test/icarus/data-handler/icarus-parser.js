@@ -40,7 +40,7 @@ test.beforeEach(t => {
 test('decodes packets with the quasi-binary decoder', t => {
 	t.context.parser.parse(badPacket1)
 
-	t.true(t.context.parser._raw.equals(Buffer.from([0, 2, 254, 253])))
+	t.true(t.context.parser._raw.equals(Buffer.from([0, 2, 254, 253, 0, 0, 0, 0])))
 })
 
 test('gracefully handles decoder errors', t => {
