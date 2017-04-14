@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [v1.0.0] - 2017-04-14
 ### Added
 - Backend connection logic and data/log db replication. (4eb02e79aa9bae70df6e5860bdc91b3f8831712d, 1bfb9fac2912718488e7d45c12d0d2078bf45ed3)
 - API method: listPorts (in ./serial.js), a wrapper around SerialPort.list that extracts hardware IDs in Windows. (905624d2e6e2f499f71df4102d5b52b208d3a5ad)
@@ -76,7 +78,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.0...HEAD
+[v1.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.3.0...v1.0.0
 [v0.3.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.1.0...v0.2.0
