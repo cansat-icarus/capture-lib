@@ -28,12 +28,12 @@ before_install:
 
 # Now test things
 script:
-  - yarn run build # Transpile
   - yarn run test # Generate coverage report and test things
   - nyc report --reporter=lcov > coverage.lcov && codecov
   - nyc report --reporter=text-lcov | codacy-coverage
 
 before_deploy:
+  - yarn run build # Transpile
   - yarn run docs # Generate docs
 
 deploy:
