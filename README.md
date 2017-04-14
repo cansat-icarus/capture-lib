@@ -14,18 +14,17 @@
 
 
 - [Installation](#installation)
-- [Building, testing and all the workflow things](#building-testing-and-all-the-workflow-things)
 - [Features](#features)
+- [Documentation](#documentation)
 - [Included components](#included-components)
   - [Serial](#serial)
   - [Quasi-binary decoder](#quasi-binary-decoder)
   - [Parser](#parser)
   - [Classifier](#classifier)
-  - [SerialHandler](#serialhandler)
+  - [Data Handler](#data-handler)
   - [Backend](#backend)
   - [Station](#station)
-  - [DB](#db)
-- [Documentation](#documentation)
+- [Building, testing and all the workflow things](#building-testing-and-all-the-workflow-things)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -33,49 +32,28 @@
 
 ## Installation
 
-This library is **not** published on npm, if you need it please suggest names for each required part (they're split into folders under src, easy to see what is a part) and I'll publish it! For the moment, I'm bad at naming and don't really want to have to maintain things that no one will ever use (except maybe for the parser or the serialport wrapper).
-Its purpose is really just to split the UI/UX from the inner workings of our ground stations.
+`$ npm install @cansat-icarus/capture-lib`
 
-If you really have to use it and cannot wait, use git submodules! But still create the issue to migrate the library
-
-## Building, testing and all the workflow things
-
-Source code uses ES2017 and some experimental syntax. So, until no supported nodejs versions remain that cannot run our code, babel is used for transpiling the source.
-
-My advice: change things and when you're done, lint, run unit tests, generate and check the new documentation (if changed), check test coverage (make sure it does not drop). And while you're fixing bugs (a unit test failing), run test:watch for help. For always-running automatic linting, use a [xo plugin](https://github.com/sindresorhus/xo#editor-plugins) in your editor.
-
-```bash
-$ npm run clean       # remove and recreate output directory (dist)
-
-$ npm run lint        # lint source using xo
-
-$ npm run build       # transpile source code into ./dist
-
-$ npm run build:watch # transpile source code into ./dist (and watch for changes in code)
-
-$ npm run docs        # generate documentation
-
-$ npm run coverage    # run unit tests and generate code coverage report
-
-$ npm run test        # run unit tests (with code coverage) and run the linter
-
-$ npm run test:watch  # run unit tests and the linter everytime the source changes
-```
+If you need just part of project please open an issue. This project could use some splitting.
 
 ## Features
 
 - Modular code base for easier coding and maintenance.
-- Quasi-binary packet encoding that minimizes packet size, diminishing time window where interference may appear.
+- Quasi-binary packet encoding that minimizes packet size, diminishing the time window where interference may appear.
 - CRC32 checksums sent with every packet to ensure no bad data is mistakenly registered in a ground station.
 - Scores every packet based on the CRC checksum and simple heuristics (eg. a temperature sensor shouldn't suddenly report a temperature 30ºC higher than the previous packet few seconds ago)
 - Automagically connects to a [backend](https://github.com/cansat-icarus/backend) server through a WebSocket.
 - Backend data(DB) replication Station->backend
-- Remote control capabilities (exposed to the backend) exposing: a REPL with access to the wrapper/station, CLI access to the host machine (something like tty.js) and possibly a VNC-like full-screen control of the host.
+- ~~Remote control capabilities (exposed to the backend) exposing: a REPL with access to the wrapper/station, CLI access to the host machine (something like tty.js) and possibly a VNC-like full-screen control of the host.~~ (not yet at least)
+
+## Documentation
+
+API documentation is available [here](https://cansat-icarus.github.io/capture-lib), built using ESDoc by Travis CI. If you want to build it locally, you can by running `npm run docs` at the root of the repository. Output will be inside a folder named docs. An overview of each module/component is available in this file.
 
 ## Included components
 ### Serial
 
-A node-serialport abstraction, allowing to change the port path without recreating the instance and keeps track of state changes (open/close/pause/resume).
+A node-serialport abstraction, allowing to change the port path without recreating the instance and keeps track of state changes (open/close/...).
 
 ### Quasi-binary decoder
 
@@ -84,15 +62,16 @@ If any byte value overflows (anything above 255) or no parsing rule was defined 
 
 ### Parser
 
-Generic class for binary data parsing. No assumptions about the packet, just a helper interface for constructing an object from raw data. Along with it, a preconfigured instance ready for telemetry, info and settings packets from the CanSat.
+Generic class for binary data parsing. No assumptions about the packet, just a helper interface for constructing an object from raw data. Along with it, a preconfigured instance ready for telemetry, info and settings packets from the CanSat. Re-implemented as IcarusParser to include our mission's packet fields.
 
 ### Classifier
 
-Not an AI unfortunately. It just helps calculating individual packet scores and the station score.
+Not an AI. An algorithm that calculates each packet's score: 60% for the CRC checksum, 40% for the heuristics.
+The station score reflects reception quality in the recent past (The nth most recent packet accounts for at least 1/(n+1) of the station score).
 
-### SerialHandler
+### Data Handler
 
-A function that decodes the data, parses it, gives it a score, and puts it in the db. Just a high-level utility piping everything together. Makes future possible npm publishing of parts of the project easier.
+A function that decodes the data, parses it, gives it a score, and puts it in the db. Just a high-level utility piping everything together.
 
 ### Backend
 
@@ -100,15 +79,39 @@ Handles the WebSocket (Socket.IO) connected to the backend. Automatically attemp
 
 ### Station
 
-Brings all the other modules together into one class instance. Wrappers should only need to access the station class, creating an instance and switching one implementation of a module (ex: DB, Backend) for another. A common place for triggering actions, changing settings and listening to events.
+Brings all the other modules together into one class. Wrappers should only need to access the station class, creating an instance and switching one implementation of a module (ex: DB, Backend) for another. A common place for triggering actions, changing settings and listening to events.
 
-### DB
+## Building, testing and all the workflow things
 
-Simply exports a PouchDB object for a locally-created database named "stationdb". Nothing else.
+Source code uses ES2017 and some experimental syntax. So, until no supported nodejs versions remain that cannot run our code, babel is used for transpiling the source.
 
-## Documentation
+My advice: change things and when you're done, lint, run unit tests, generate and check the new documentation (if changed), check test coverage (make sure it does not drop). And while you're fixing bugs (a unit test failing), run test:watch for help. For always-running automatic linting, use a [xo plugin](https://github.com/sindresorhus/xo#editor-plugins) in your editor.
 
-API documentation is available [here](https://cansat-icarus.github.io/capture-lib), built using JSDoc by Travis CI (TODO: actually do that). If you want to build it locally, you can by running JSDoc at the root of the repository. Output will be inside a folder named docs. An overview of each module/component is available in this file.
+```bash
+$ yarn run clean
+$ npm run clean       # remove and recreate output directory (dist)
+
+$ yarn run lint
+$ npm run lint        # lint source using xo
+
+$ yarn run build
+$ npm run build       # transpile source code into ./dist
+
+$ yarn run build:watch
+$ npm run build:watch # transpile source code into ./dist (and watch for changes in code). Does not work in PowerShell/CMD.
+
+$ yarn run docs
+$ npm run docs        # generate documentation
+
+$ yarn run coverage
+$ npm run coverage    # run unit tests and generate code coverage report
+
+$ yarn run test
+$ npm run test        # run unit tests (with code coverage) and run the linter
+
+$ yarn run test:watch
+$ npm run test:watch  # run unit tests and the linter everytime the source changes
+```
 
 ## Contributing
 
@@ -120,7 +123,6 @@ Some advice for a good pull request:
 - If the tests fail, and you're doing it on purpose, you better have a good explanation! Having a valid reason, change the unit tests to what they should be.
 - Besides writing unit tests, make sure to **document** any new features and changes to normal behavior.
 - Short, informative commit messages are good. See [here](http://chris.beams.io/posts/git-commit/) why they matter and how to write good ones. [Commitizen][commitizen-url] can help you stick to our commit message style.
-
 
 ## License
 
