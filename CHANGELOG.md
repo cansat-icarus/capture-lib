@@ -4,6 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v1.0.1] - 2017-04-14
+Changes to CI configuration, not to the code itself.
+
 ## [v1.0.0] - 2017-04-14
 ### Tested configurations
 Basic packet reception was tested and is working.
@@ -82,7 +85,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.1...HEAD
+[v1.0.1]: https://github.com/cansat-icarus/capture-lib/compare/v1.0.1...v1.0.0
 [v1.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.3.0...v1.0.0
 [v0.3.0]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/cansat-icarus/capture-lib/compare/v0.2.0...v0.2.1

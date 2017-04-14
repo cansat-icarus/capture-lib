@@ -28,10 +28,13 @@ before_install:
 
 # Now test things
 script:
-  - yarn run build # Transpile
   - yarn run test # Generate coverage report and test things
   - nyc report --reporter=lcov > coverage.lcov && codecov
   - nyc report --reporter=text-lcov | codacy-coverage
+
+before_deploy:
+  - yarn run build # Transpile
+  - yarn run docs # Generate docs
 
 deploy:
   # Deploy to npm when new version is good
@@ -42,7 +45,7 @@ deploy:
     on:
       branch: master
       tags: true
-      node: 6 # The version we use in electron
+      node: v6 # The version we use in electron
 
   # Update docs when new version is good
   - provider: pages
@@ -52,4 +55,4 @@ deploy:
     on:
       branch: master
       tags: true
-      node: 6 # The version we use in electron
+      node: v6 # The version we use in electron
