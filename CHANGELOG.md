@@ -4,6 +4,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+Changes to CI configuration, not to the code itself.
 ## [v1.0.0] - 2017-04-14
 ### Tested configurations
 Basic packet reception was tested and is working.
