@@ -35,6 +35,7 @@ script:
 before_deploy:
   - yarn run build # Transpile
   - yarn run docs # Generate docs
+  - touch docs/.nojekyll
 
 deploy:
   # Deploy to npm when new version is good
