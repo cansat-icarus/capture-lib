@@ -3,7 +3,7 @@ import * as conv from '../../../src/icarus/data-handler/unit-conv'
 import * as strings from '../../../src/icarus/data-handler/cansat-strings'
 import IcarusParser from '../../../src/icarus/data-handler/parser'
 
-const badPacket1 = Buffer.from([0, 2, 253, 1, 253, 0, 0, 0, 0, 0])
+const badPacket1 = Buffer.from(Buffer.from([0, 2, 253, 1, 253, 0, 0, 0, 0, 0]).toString('base64'))
 const badPacket2 = Buffer.from([253, 4, 254, 0, 0])
 
 // Sample telemetry packet
@@ -37,11 +37,7 @@ test.beforeEach(t => {
 	t.context.parser = new IcarusParser()
 })
 
-test('decodes packets with the quasi-binary decoder', t => {
-	t.context.parser.parse(badPacket1)
-
-	t.true(t.context.parser._raw.equals(Buffer.from([0, 2, 254, 253, 0, 0, 0, 0])))
-})
+test.todo('decodes packets (base64)')
 
 test('gracefully handles decoder errors', t => {
 	const packet = t.context.parser.parse(badPacket2)

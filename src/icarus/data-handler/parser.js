@@ -1,5 +1,4 @@
 import Parser from '../../parser'
-import {decode} from '../../quasi-binary'
 import * as conv from './unit-conv'
 import {messages, moduleNames} from './cansat-strings' // eslint-disable-line import/named
 
@@ -20,7 +19,7 @@ export default class IcarusParser extends Parser {
 		// Decode packet
 		try {
 			/** @ignore */
-			this._raw = decode(rawPacket)
+			this._raw = Buffer.from(rawPacket.toString(), 'base64')
 
 			// Parser needs to cleanup some things
 			super.parse(this._raw)
@@ -28,7 +27,7 @@ export default class IcarusParser extends Parser {
 			// When we can't decode it, we can't continue
 			this.packet.error = err.message
 
-			this.packet.type = '?[decode error]'
+			this.packet.type = '?[error]'
 		}
 
 		// Save receival time

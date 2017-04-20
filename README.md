@@ -39,7 +39,7 @@ If you need just part of project please open an issue. This project could use so
 ## Features
 
 - Modular code base for easier coding and maintenance.
-- Quasi-binary packet encoding that minimizes packet size, diminishing the time window where interference may appear.
+- Base64 packet encoding that minimizes packet size, diminishing the time window where interference may appear.
 - CRC32 checksums sent with every packet to ensure no bad data is mistakenly registered in a ground station.
 - Scores every packet based on the CRC checksum and simple heuristics (eg. a temperature sensor shouldn't suddenly report a temperature 30ºC higher than the previous packet few seconds ago)
 - Automagically connects to a [backend](https://github.com/cansat-icarus/backend) server through a WebSocket.
@@ -55,10 +55,9 @@ API documentation is available [here](https://cansat-icarus.github.io/capture-li
 
 A node-serialport abstraction, allowing to change the port path without recreating the instance and keeps track of state changes (open/close/...).
 
-### Quasi-binary decoder
+### Base64 Packet Encoding
 
-Decodes data from our CanSat following this set of rules: for each byte, if the value is within [0, 232] leave it unchanged, if the byte value equals 253, write it plus (as in sum the values) the value of the next byte (whose parsing will be skipped).
-If any byte value overflows (anything above 255) or no parsing rule was defined for this case stop parsing and return an error.
+Base64 is an established standard for encoding data using only alphanumeric characters, '/', '+', and '='. It's easy to manually spot interference and it translates to a reduction to ~19.7% of the original packet size. It's efficient, it's quick (quicker than serializing all data to strings like it's usual) and it works.
 
 ### Parser
 
