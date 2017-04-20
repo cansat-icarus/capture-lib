@@ -5,6 +5,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ## [v1.0.3] - 2017-4-14
+### Tested configurations
+Basic packet reception was tested and is working.
+Backend-related code will be tested in the next few weeks.
+
+### Changed
+- **BREAKING**: Packet encoding algorithm changed from quasi-binary to base64. It gives the same savings, and our transceivers actually work with it. (3006aca0c65bbd9241e405b1f775a8098b475140)
+
 No changes to the code. Just changing the package name to be scoped (in @cansat-icarus).
 Last patch version containing nothing. I hope.
 
