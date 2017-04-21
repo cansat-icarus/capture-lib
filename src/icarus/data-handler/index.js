@@ -43,7 +43,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 */
 export function parser() {
-	const delimiter = [254, 255]
+	const delimiter = [13, 10] // \r\n
 	let buf = []
 	let nextDelimIndex = 0
 

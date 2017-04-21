@@ -4,6 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v2.0.4] - 2017-04-21
+### Tested configurations
+Basic packet reception was tested and is working.
+Backend-related code will be tested in the next few weeks.
+
+### Fixes
+- Split packets or \r\n. (4c21354a61fa4fefa86ba7769de6ca65dde7da28)
+
 ## [v2.0.3] - 2017-04-21
 See changelog for 2.0.2, some changes went unreleased.
 
@@ -122,7 +130,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v2.0.3
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v2.0.4
+[v2.0.4]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.1...v2.0.2
 [v2.0.1]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.0...v2.0.1
