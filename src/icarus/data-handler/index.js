@@ -11,11 +11,6 @@ import IcarusParser from './parser'
 // TODO: check with the CanSat on: is this what we receive?
 const tmBuffer = Buffer.from('Transceiver MODE')
 
-/**
- * {@link IcarusParser} instance for parsing duties.
- * @private
- */
-const packetParser = new IcarusParser()
 
 /**
  * Creates and returns a "byteDelimiter" parser.
@@ -65,6 +60,12 @@ export function parser() {
 				// Remove trailing 254, 255 and ignore empty packets/'Transceiver MODE'
 				// Spare the parser the trouble, packets are always at least 6 bytes
 				if (buf.length >= 8 && !Buffer.from(buf).equals(tmBuffer)) {
+					// Create one packetParser object per packet
+					// If this one crashes, the others have a chance.
+					// It shouldn't throw any exception, but sometimes weird things happen.
+					// Let us not forget Murphy's Law.
+					const packetParser = new IcarusParser()
+
 					emitter.emit('data', packetParser.parse(Buffer.from(buf.slice(0, buf.length - 2))))
 				}
 
