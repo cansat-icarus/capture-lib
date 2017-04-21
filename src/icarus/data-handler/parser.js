@@ -17,23 +17,23 @@ export default class IcarusParser extends Parser {
 	 */
 	parse(rawPacket) {
 		// Decode packet
+		this._raw = Buffer.from(rawPacket.toString(), 'base64')
+
+		// Parser needs to cleanup some things
+		super.parse(this._raw)
+
+		// Save raw packet (encoded version)
+		this.packet.raw = rawPacket.toJSON().data
+
+		// Save receival time
+		this.packet.receivedAt = Date.now()
+
 		try {
-			/** @ignore */
-			this._raw = Buffer.from(rawPacket.toString(), 'base64')
-
-			// Parser needs to cleanup some things
-			super.parse(this._raw)
-
-			// Save receival time
-			this.packet.receivedAt = Date.now()
-
-			// Save raw packet (encoded version)
-			this.packet.raw = rawPacket.toJSON().data
-
-			// Handle badly encoded packets
-			if (this.packet.error) {
-				return this.packet
+			// Stop right now if there are no checksums
+			if (!this.packet.crc) {
+				throw new Error('Missing CRC checksums')
 			}
+
 			// Get packet type identifier
 			this.readChar('type')
 
