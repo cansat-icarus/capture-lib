@@ -11,7 +11,6 @@ import IcarusParser from './parser'
 // TODO: check with the CanSat on: is this what we receive?
 const tmBuffer = Buffer.from('Transceiver MODE')
 
-
 /**
  * Creates and returns a "byteDelimiter" parser.
  * DISCLAIMER: It's a patched version of node-serialport's byteDelimiter parser.
