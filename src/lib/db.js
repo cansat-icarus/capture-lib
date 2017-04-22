@@ -1,15 +1,6 @@
-import path from 'path'
 import url from 'url'
 import PouchDB from 'pouchdb'
-
-/**
- * A prefix for local databases.
- * Can be overriden via `global.dbNamePrefix`.
- * It is used to store the databases in a specific directory that
- * is not necessarily the current working directory
- * @type {String}
- */
-const dbNamePrefix = global.dbNamePrefix || ''
+import normalizePath from './path'
 
 /**
  * Gets a local database.
@@ -17,7 +8,7 @@ const dbNamePrefix = global.dbNamePrefix || ''
  * @returns {PouchDB} PouchDB instance referring to the requested database.
  */
 export default function getDB(name) {
-	return new PouchDB(path.join(dbNamePrefix, name))
+	return new PouchDB(normalizePath(name))
 }
 
 /**
