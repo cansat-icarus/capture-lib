@@ -1,4 +1,5 @@
 import bunyan from 'bunyan'
+import normalizePath from './path'
 
 /**
  * Creates a configured bunyan logger.
@@ -43,7 +44,7 @@ export default function createLogger(name, db) {
 			{
 				level: 'debug',
 				type: 'rotating-file',
-				path: `CanSatGS-${name}.log`,
+				path: normalizePath(`CanSatGS-${name}.log`),
 				period: '3h', // New log file at every 3h
 				count: 40 // Keep 40 log files
 			},
