@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- Save log files in `global.pathPrefix` directory. (a5b738e9ebfdd9eeed1a8e8731efe0a2c771caa5)
 
 ## [v2.0.4] - 2017-04-21
 ### Tested configurations
