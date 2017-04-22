@@ -1,26 +1,21 @@
-import {join as pathJoin} from 'path'
 import test from 'ava'
 import {default as getDB, getRemoteDB, __RewireAPI__} from '../../src/lib/db'
+import normalizePath from '../../src/lib/path'
 
 test.before(() => __RewireAPI__.__Rewire__('PouchDB', Array))
 
 test.after.always(() => __RewireAPI__.__ResetDependency__('PouchDB'))
 
-test('get local databases', t => {
+test.serial('get local databases', t => {
 	const dbName = 'adatabase'
 	const db = getDB(dbName)
-	t.is(db[0], dbName)
-})
+	t.is(db[0], normalizePath(dbName))
 
-test.serial('get local database with global prefix', t => {
-	const prefix = 'prefix'
-	const dbName = 'adatabase'
-	__RewireAPI__.__Rewire__('dbNamePrefix', prefix)
-
-	const db = getDB(dbName)
-
-	t.is(db[0], pathJoin(prefix, dbName))
-	__RewireAPI__.__ResetDependency__('dbNamePrefix')
+	// TODO: split normalizePath test into some other place
+	normalizePath.__Rewire__('pathPrefix', 'aprefix')
+	const db2 = getDB(dbName)
+	t.is(db2[0], normalizePath(dbName))
+	normalizePath.__ResetDependency__('pathPrefix')
 })
 
 test('get local database as remote', t => {
