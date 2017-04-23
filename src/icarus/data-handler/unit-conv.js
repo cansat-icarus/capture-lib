@@ -11,6 +11,11 @@ export function gToMs2(gValue) {
 	return gValue * 9.80665
 }
 
+export function analogToMV(analogReadResult) {
+	// Raw values range from 0 to 1023, where 0 -> 0V and 1024 -> 5V (or 5000mV) (Arduino analogRead reference)
+	return (analogReadResult * 5000) / 1023
+}
+
 /**
  * Converts raw DS18B20 temperatures to ºC.
  * @param {Number} raw Raw DS18B20 temperature.
@@ -26,7 +31,15 @@ export function DS18B20(raw) {
  * @return {Number} hPa pressure.
  */
 export function MPX4115A(raw) {
-	return ((raw / 1024.0) + 0.095) / 0.0009 // TODO: confirm value, worked last year
+	let vOut = analogToMV((5000 * raw) / 1023)
+
+	// 204mV -> offset for minimum rated pressure (Datasheet)
+	vOut -= 204
+
+	// 45.9 mV/kPa (Datasheet)
+	// 15 kPa -> minimum rated pressure (Datasheet)
+	// last multiplication by 10: conversion from kPa to hPa (1kPa = 10hPa)
+	return ((vOut / 45.9) + 15) * 10
 }
 
 export function LIS331HH_24G(raw) {
