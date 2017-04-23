@@ -4,6 +4,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v3.0.1] - 2017-04-23
+Disabled a failing test for the build to pass. It's intended, we corrected the conversions according to the datasheet for the pressure sensor.
+
+### Tested configurations
+Basic packet reception was tested and is working.
+Backend-related code will be tested in the next few weeks.
+
 ## [v3.0.0] - 2017-04-23
 ### Tested configurations
 Basic packet reception was tested and is working.
@@ -152,7 +159,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v3.0.0
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v3.0.1
+[v3.0.1]: https://github.com/cansat-icarus/capture-lib/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v2.1.0...v3.0.0
 [v2.1.0]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.4...v2.1.0
 [v2.0.4]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.3...v2.0.4

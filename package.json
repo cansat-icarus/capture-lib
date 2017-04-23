@@ -1,6 +1,6 @@
 {
   "name": "@cansat-icarus/capture-lib",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A library that handles all CanSat ground station-related duties.",
   "homepage": "https://cansat-icarus.github.io/capture-lib",
   "bugs": {
