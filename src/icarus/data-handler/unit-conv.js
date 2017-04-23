@@ -6,6 +6,11 @@
  */
 const getBit = (b, i) => Boolean((b >> i) & 1)
 
+export function gToMs2(gValue) {
+	// 1G = 9.80665 m/s^2 (International Service of Weights and Measures (2006) (ISBN: 92-822-2213-6))
+	return gValue * 9.80665
+}
+
 /**
  * Converts raw DS18B20 temperatures to ºC.
  * @param {Number} raw Raw DS18B20 temperature.
@@ -25,10 +30,10 @@ export function MPX4115A(raw) {
 }
 
 export function LIS331HH_24G(raw) {
-	// 12 mG/digit according to datasheet
-	// 1G = 9.80665 m/s^2 according to the International Service of Weights and Measures (2006 ISBN: 92-822-2213-6)
+	// 12 mG/digit (Datasheet)
+	// mGs, not Gs, so we need to divide by 1000
+	return gToMs2((raw * 12) / 1000)
 
-	return (raw * 12 / 1000) * 9.80665
 }
 
 /**
