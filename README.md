@@ -18,7 +18,7 @@
 - [Documentation](#documentation)
 - [Included components](#included-components)
   - [Serial](#serial)
-  - [Quasi-binary decoder](#quasi-binary-decoder)
+  - [Base64 Packet Encoding](#base64-packet-encoding)
   - [Parser](#parser)
   - [Classifier](#classifier)
   - [Data Handler](#data-handler)
