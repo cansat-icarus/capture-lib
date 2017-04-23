@@ -46,7 +46,12 @@ export function LIS331HH_24G(raw) {
 	// 12 mG/digit (Datasheet)
 	// mGs, not Gs, so we need to divide by 1000
 	return gToMs2((raw * 12) / 1000)
+}
 
+export function MMA7361_6G(raw) {
+	// 206 mV/G (Datasheet)
+	// 0G ≈ 1.65V or 1650mV (Datasheet)
+	return gToMs2((analogToMV(raw) - 1650) / 206)
 }
 
 /**
