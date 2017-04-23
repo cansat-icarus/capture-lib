@@ -54,6 +54,5 @@ deploy:
     github_token: $GITHUB_TOKEN
     local_dir: docs
     on:
-      branch: master
-      tags: true
-      node: v6 # The version we use in electron
+      branch: develop
+      node: v6 # The version that should be more stable (although 7.0 is fine)

@@ -87,9 +87,9 @@ export default class IcarusParser extends Parser {
 					this.readInt('accel.0.x', 2, conv.LIS331HH_24G)
 					this.readInt('accel.0.y', 2, conv.LIS331HH_24G)
 					this.readInt('accel.0.z', 2, conv.LIS331HH_24G)
-					this.readInt('accel.1.x', 2, conv.LIS331HH_24G)
-					this.readInt('accel.1.y', 2, conv.LIS331HH_24G)
-					this.readInt('accel.1.z', 2, conv.LIS331HH_24G)
+					this.readInt('accel.1.x', 2, conv.MMA7361_6G)
+					this.readInt('accel.1.y', 2, conv.MMA7361_6G)
+					this.readInt('accel.1.z', 2, conv.MMA7361_6G)
 					break
 				case 'i':
 					// Message code and interpretation

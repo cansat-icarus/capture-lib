@@ -7,7 +7,7 @@
 [![Codecov Status][codecov-image]][codecov-url]
 [![Codacy Badge][codacy-image]][codacy-url]
 [![Commitizen friendly][commitizen-image]][commitizen-url]
-> Does anything the groundstation can! To use it in a real world scenario wrap it for a specific platform/use case or use a pre-built wrapper.
+> A library that handles all CanSat ground station-related duties.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -18,7 +18,7 @@
 - [Documentation](#documentation)
 - [Included components](#included-components)
   - [Serial](#serial)
-  - [Quasi-binary decoder](#quasi-binary-decoder)
+  - [Base64 Packet Encoding](#base64-packet-encoding)
   - [Parser](#parser)
   - [Classifier](#classifier)
   - [Data Handler](#data-handler)
