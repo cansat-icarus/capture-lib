@@ -1,6 +1,20 @@
 {
   "name": "@cansat-icarus/capture-lib",
   "version": "2.1.0",
+  "description": "A library that handles all CanSat ground station-related duties.",
+  "homepage": "https://cansat-icarus.github.io/capture-lib",
+  "bugs": {
+    "url": "https://github.com/cansat-icarus/capture-lib/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "André Breda",
+    "email": "addobandre99@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cansat-icarus/capture-lib.git"
+  },
   "main": "dist/index.js",
   "jsnext:main": "src/index.js",
   "module": "src/index.js",
