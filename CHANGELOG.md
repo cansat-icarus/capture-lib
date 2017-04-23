@@ -4,6 +4,20 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v3.0.0] - 2017-04-23
+### Tested configurations
+Basic packet reception was tested and is working.
+Backend-related code will be tested in the next few weeks.
+
+### Breaking
+- Switch 2nd accelerometer to a MMA7361 (a68d0080c43b51e3fa34efe21b847eb28dd55104)
+
+### Added
+- Value conversions for the MMA7361 accelerometer. (bc9782da39d1bb9826ba53142c217047c3d0c14b)
+
+### Fixed
+- Value conversions for the MPX4115A pressure sensor according to datasheet. (b2e3e028f516e057dd9a3739c431532b18c0fc62)
+
 ## [v2.1.0] - 2017-04-22
 ### Tested configurations
 Basic packet reception was tested and is working.
@@ -138,7 +152,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v2.1.0
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v3.0.0
+[v3.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v2.1.0...v3.0.0
 [v2.1.0]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.4...v2.1.0
 [v2.0.4]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.2...v2.0.3
