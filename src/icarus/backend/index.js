@@ -55,7 +55,7 @@ export default class Backend extends EventEmitter {
 		 * @type {Replicator}
 		 */
 		this.dataReplicator = new Replicator(
-			this._log.child({childId: 'station.backend.replicator:data'}),
+			this._log.child({childId: 'backend.replicator:data'}),
 			dataDB
 		)
 
@@ -66,7 +66,7 @@ export default class Backend extends EventEmitter {
 		 * @type {Replicator}
 		 */
 		this.logReplicator = new Replicator(
-			this._log.child({childId: 'station.backend.replicator:data'}),
+			this._log.child({childId: 'backend.replicator:log'}),
 			logDB
 		)
 
