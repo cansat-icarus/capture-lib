@@ -175,7 +175,7 @@ export default class Replicator extends EventEmitter {
 				if (!err) {
 					this._backoff.success()
 				}
-				this._updateState('pause', {err})
+				this._updateState('pause', err)
 			})
 			.on('active', () => {
 				this._backoff.success()
@@ -219,7 +219,11 @@ export default class Replicator extends EventEmitter {
 	 * @emits state(state)
 	 */
 	_updateState(state, moreLogData) {
-		this._log.info('updateState', moreLogData, {state})
+		// Prevent infinite loops of the log replicator flipping between active and inactive
+		// Just log active/paused states when you're not switching between them or when errors occur
+		if ((state !== 'active' && state !== 'pause') || (this._state !== 'active' && this._state !== 'pause') || moreLogData) {
+			this._log.info('updateState', moreLogData, {state})
+		}
 		this._state = state
 		this.emit('state', state)
 	}
