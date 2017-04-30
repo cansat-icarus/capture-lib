@@ -47,22 +47,17 @@ export default class ExponentialBackoff extends EventEmitter {
 	 */
 	backoff() {
 		// Backoff already in progress
-		if (this._timeoutID !== undefined) {
+		if (this._timeoutID) {
 			return
 		}
-		const delay = this._strategy.next()
-		this._timeoutID = setTimeout(this._handleBackoff.bind(this), delay)
-		this.emit('backoff', this._backoffNumber, delay)
-	}
 
-	/**
-	 * Responsible for executing the routine protected by the backoff algorithm.
-	 * @emits retry(_backoffNumber) whose event listener should execute the routine.
-	 */
-	_handleBackoff() {
-		this._timeoutID = undefined
-		this.emit('retry', this._backoffNumber)
-		this._backoffNumber++
+		const delay = this._strategy.next()
+		this._timeoutID = setTimeout(() => {
+			this._timeoutID = undefined
+			this.emit('retry', this._backoffNumber)
+			this._backoffNumber++
+		}, delay)
+		this.emit('backoff', this._backoffNumber, delay)
 	}
 
 	/**
