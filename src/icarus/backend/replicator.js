@@ -137,12 +137,12 @@ export default class Replicator extends EventEmitter {
 			return Promise.resolve()
 		}
 
+		// Stop any already running replication
+		this.stop()
+
 		this._log.info('Live replication triggered', {dbUrl, username})
 		console.log('The password is:', password) // Gets to stdout but not to log files or dbs
 		this._updateState('idle')
-
-		// Stop any already running replication
-		this._cancelCurrentReplicator()
 
 		// Create the DB object here to avoid memory leaks
 		this._targetDB = getRemoteDB(dbUrl, username, password)
