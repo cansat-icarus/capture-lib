@@ -75,10 +75,18 @@ export default class Replicator extends EventEmitter {
 	stop() {
 		this._log.info('Stopping replication')
 		this._updateState('inactive')
+
+		this._cancelCurrentReplicator()
+		this._backoff.reset()
+	}
+
+	_cancelCurrentReplicator() {
 		if (this._replication) {
+			// Prevent the replicator from triggering the backoff
+			this._replication.removeAllListeners()
+
 			this._replication.cancel()
 		}
-		this._backoff.reset()
 	}
 
 	/**
@@ -153,9 +161,7 @@ export default class Replicator extends EventEmitter {
 		}
 
 		// Cancel current replicator if there is one
-		if (this._replication) {
-			this._replication.cancel()
-		}
+		this._cancelCurrentReplicator()
 
 		this._log.info('Attempting replication', {retry})
 
