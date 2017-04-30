@@ -202,7 +202,7 @@ export default class Replicator extends EventEmitter {
 	 * @param {Boolean} [opts.retry=false] Enable PouchDB's built-in backoff algorithm.
 	 * @returns {PouchDBReplicationID}
 	 */
-	_createReplicator(opts = {live: true, retry: false}) {
+	_createReplicator(opts = {live: true, retry: false, batch_size: 20, batch_limit: 5}) { // eslint-disable-line camelcase
 		return this._sourceDB.replicate.to(
 			this._targetDB,
 			opts
