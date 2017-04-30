@@ -48,7 +48,7 @@ export default class Station extends EventEmitter {
 		 * Log database instance, internal to the station.
 		 * @type {PouchDB}
 		 */
-		this.logDB = getDB('log')
+		this.logDB = getDB(`log-${name}`)
 
 		/**
 		 * Logger instance.
