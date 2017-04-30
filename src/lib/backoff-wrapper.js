@@ -27,7 +27,7 @@ export default class ExponentialBackoff extends EventEmitter {
 		 * @type {ExponentialBackoffStrategy}
 		 */
 		this._strategy = new ExponentialBackoffStrategy({
-			randomisationFactor: 0.3
+			randomisationFactor: 0.3,
 			initialDelay: 1000,
 			maxDelay: 60000
 		})
