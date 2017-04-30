@@ -26,7 +26,11 @@ export default class ExponentialBackoff extends EventEmitter {
 		 * ExponentialBackoffStrategy instance.
 		 * @type {ExponentialBackoffStrategy}
 		 */
-		this._strategy = new ExponentialBackoffStrategy({randomisationFactor: 0.3})
+		this._strategy = new ExponentialBackoffStrategy({
+			randomisationFactor: 0.3
+			initialDelay: 1000,
+			maxDelay: 60000
+		})
 
 		/**
 		 * Number of previous failed attempts.
