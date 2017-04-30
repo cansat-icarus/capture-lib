@@ -99,10 +99,10 @@ export default class Backend extends EventEmitter {
 		this._socket.on('connect', () => this._updateState('connect'))
 		this._socket.on('disconnected', () => this._updateState('disconnect'))
 
-		// TODO: Respond to replication request
-		this._socket.on('replicate', (dataDbName, logDbName, user, pass) => {
-			this.dataReplicator.replicate(dataDbName, user, pass)
-			this.logReplicator.replicate(logDbName, user, pass)
+		// Respond to replication requests
+		this._socket.on('replicate', (dataDbUrl, logDbUrl, user, pass) => {
+			this.dataReplicator.replicate(dataDbUrl, user, pass)
+			this.logReplicator.replicate(logDbUrl, user, pass)
 		})
 	}
 
