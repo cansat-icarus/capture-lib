@@ -58,6 +58,9 @@ export default class Replicator extends EventEmitter {
 
 		this._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))
 		this._backoff.on('backoff', (retry, delay) => {
+			// Cancels current replicator if there is one (no need in keeping an errored replicator)
+			this._cancelCurrentReplicator()
+
 			// Don't signal we're connecting if we're inactive
 			if (this._state === 'inactive' || this._state === 'cleanup') {
 				return
@@ -85,7 +88,9 @@ export default class Replicator extends EventEmitter {
 			// Prevent the replicator from triggering the backoff
 			this._replication.removeAllListeners()
 
+			// Get rid of it
 			this._replication.cancel()
+			this._replication = undefined
 		}
 	}
 
@@ -133,12 +138,10 @@ export default class Replicator extends EventEmitter {
 		}
 
 		this._log.info('Live replication triggered', {dbName, username})
-		if (this._replication) {
-			// Stop any already running replication
-			this.stop()
-		}
 
 		this._updateState('connecting')
+		// Stop any already running replication
+		this._cancelCurrentReplicator()
 
 		// Create the DB object here to avoid memory leaks
 		this._targetDB = getRemoteDB(dbName, username, password)
