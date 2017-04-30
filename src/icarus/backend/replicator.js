@@ -67,7 +67,7 @@ export default class Replicator extends EventEmitter {
 			}
 
 			this._log.debug('Backing off from replication', {retry, delay})
-			this._updateState('connecting')
+			this._updateState('idle')
 		})
 	}
 
@@ -131,20 +131,21 @@ export default class Replicator extends EventEmitter {
 	 * @emits state(state): the state of the replicator.
 	 * @returns {Promise} resolved when the replication connection succeeds for the first time.
 	 */
-	replicate(dbName, username, password) {
+	replicate(dbUrl, username, password) {
 		// Don't try replicating when we're going away
 		if (this._state === 'cleanup') {
 			return Promise.resolve()
 		}
 
-		this._log.info('Live replication triggered', {dbName, username})
+		this._log.info('Live replication triggered', {dbUrl, username})
+		console.log('The password is:', password) // Gets to stdout but not to log files or dbs
+		this._updateState('idle')
 
-		this._updateState('connecting')
 		// Stop any already running replication
 		this._cancelCurrentReplicator()
 
 		// Create the DB object here to avoid memory leaks
-		this._targetDB = getRemoteDB(dbName, username, password)
+		this._targetDB = getRemoteDB(dbUrl, username, password)
 
 		// Kick the process into action
 		return new Promise(resolve => {
