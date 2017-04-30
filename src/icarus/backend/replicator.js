@@ -141,7 +141,6 @@ export default class Replicator extends EventEmitter {
 		this.stop()
 
 		this._log.info('Live replication triggered', {dbUrl, username})
-		console.log('The password is:', password) // Gets to stdout but not to log files or dbs
 		this._updateState('idle')
 
 		// Create the DB object here to avoid memory leaks
