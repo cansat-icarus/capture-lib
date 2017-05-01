@@ -6,11 +6,6 @@
  */
 const getBit = (b, i) => Boolean((b >> i) & 1)
 
-export function gToMs2(gValue) {
-	// 1G = 9.80665 m/s^2 (International Service of Weights and Measures (2006) (ISBN: 92-822-2213-6))
-	return gValue * 9.80665
-}
-
 export function analogToMV(analogReadResult) {
 	// Raw values range from 0 to 1023, where 0 -> 0V and 1024 -> 5V (or 5000mV) (Arduino analogRead reference)
 	return (analogReadResult * 5000) / 1023
@@ -45,13 +40,13 @@ export function MPX4115A(raw) {
 export function LIS331HH_24G(raw) {
 	// 12 mG/digit (Datasheet)
 	// mGs, not Gs, so we need to divide by 1000
-	return gToMs2((raw * 12) / 1000)
+	return (raw * 12) / 1000
 }
 
 export function MMA7361_6G(raw) {
 	// 206 mV/G (Datasheet)
 	// 0G ≈ 1.65V or 1650mV (Datasheet)
-	return gToMs2((analogToMV(raw) - 1650) / 206)
+	return (analogToMV(raw) - 1650) / 206
 }
 
 /**
