@@ -4,6 +4,31 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v4.0.0] - 2017-05-01
+### Tested configurations
+Basic packet reception was tested and is working.
+Backend connection and replication is also working (required a few bugfixes included in this release).
+
+### Breaking
+- Acceleration unit is now G (was m/s^2). It was deemed more fitting for us. (1ca064957fe633c5e2fe047fa9a40c4748469b82)
+- Dropped support for NodeJS v4 and Electron v1.4. (92a509734042c5da72ecdd667de3301919c50de1)
+
+### Added
+- New replicator state that removes undefined behavior between backoff. (758ed04068bc8771da586b270609f448e9073917)
+
+### Fixed
+- Backoff now has a minimum delay of 1s and a maximum delay of 60s to prevent deadlocks. (c04503cca805511b251d0169315ad31e1f313a82, df99e95430764d4c4d70c7c76545b24bd7b77ec8)
+- When replication fails, all event listeners for the task are removed right after backing off to prevent duplicate backoff calls. (3176cc9f77b3f5ca6971c1b4a6e92fb2cc89e19a)
+- Limited PouchDB replicator batching to prevent deadlocks. (ba804a692702001cc78ad2b5842b109703df8d55)
+- Replicator is no longer marked as "connecting" while backing off. (758ed04068bc8771da586b270609f448e9073917)
+- Prevent log replicator from going in an infinite loop: do not log pause or active events unless coming from a different state or an error occurs. (dcb4953477659910b27a851a98742254e7d4b748)
+
+### Changed
+- The station name is now included in the log DB path to split logs of different missions/stations. (a6e8038573da00bf72b85c99dc85c7564903c204)
+- The PouchDB replication task is now dereferenced while backing off, allowing GC to get rid of it and saving memory. (071d0b1731c669d19d3c18819f206c3bdcf3f6c1)
+- Replicators are now also stopped when disconnecting from the backend to save memory. It's possible they slow down the app too much and the station operator may decide that they mustn't run. (ac06773cba8891c69785656d024e66a6decd6514)
+- Log childIds are now shorter because they no longer begin with "station." (which is redundant, we know they are part of the station). (59bb9e9763bf1f8a94c72b6e2e890a0e102fc613)
+
 ## [v3.0.1] - 2017-04-23
 Disabled a failing test for the build to pass. It's intended, we corrected the conversions according to the datasheet for the pressure sensor.
 
@@ -159,7 +184,8 @@ None. **UNTESTED AND UNSTABLE. DO NOT USE!** Until unit tests and test protocol 
 - Add sensor unit conversion.
 - Add string tables for raw CanSat values.
 
-[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v3.0.1
+[Unreleased]: https://github.com/cansat-icarus/capture-lib/compare/HEAD...v4.0.0
+[v4.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v3.0.1...v4.0.0
 [v3.0.1]: https://github.com/cansat-icarus/capture-lib/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/cansat-icarus/capture-lib/compare/v2.1.0...v3.0.0
 [v2.1.0]: https://github.com/cansat-icarus/capture-lib/compare/v2.0.4...v2.1.0
