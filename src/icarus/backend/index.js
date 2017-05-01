@@ -55,7 +55,7 @@ export default class Backend extends EventEmitter {
 		 * @type {Replicator}
 		 */
 		this.dataReplicator = new Replicator(
-			this._log.child({childId: 'station.backend.replicator:data'}),
+			this._log.child({childId: 'backend.replicator:data'}),
 			dataDB
 		)
 
@@ -66,7 +66,7 @@ export default class Backend extends EventEmitter {
 		 * @type {Replicator}
 		 */
 		this.logReplicator = new Replicator(
-			this._log.child({childId: 'station.backend.replicator:data'}),
+			this._log.child({childId: 'backend.replicator:log'}),
 			logDB
 		)
 
@@ -99,10 +99,10 @@ export default class Backend extends EventEmitter {
 		this._socket.on('connect', () => this._updateState('connect'))
 		this._socket.on('disconnected', () => this._updateState('disconnect'))
 
-		// TODO: Respond to replication request
-		this._socket.on('replicate', (dataDbName, logDbName, user, pass) => {
-			this.dataReplicator.replicate(dataDbName, user, pass)
-			this.logReplicator.replicate(logDbName, user, pass)
+		// Respond to replication requests
+		this._socket.on('replicate', (dataDbUrl, logDbUrl, user, pass) => {
+			this.dataReplicator.replicate(dataDbUrl, user, pass)
+			this.logReplicator.replicate(logDbUrl, user, pass)
 		})
 	}
 
@@ -123,8 +123,10 @@ export default class Backend extends EventEmitter {
 		// Finally remove the socket reference here
 		this._socket = null
 
-		// No need to stop replicators, they're harmless
-		// if you need them gone, disconnect from the internet
+		// Stop the replicators
+		// The operator may be experiencing issues and prefer to keep them off
+		this.dataReplicator.stop()
+		this.logReplicator.stop()
 
 		this._updateState('inactive')
 	}

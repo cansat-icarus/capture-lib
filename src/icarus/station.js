@@ -48,7 +48,7 @@ export default class Station extends EventEmitter {
 		 * Log database instance, internal to the station.
 		 * @type {PouchDB}
 		 */
-		this.logDB = getDB('log')
+		this.logDB = getDB(`log-${name}`)
 
 		/**
 		 * Logger instance.
@@ -60,13 +60,13 @@ export default class Station extends EventEmitter {
 		 * {@link Serial} instance with the {@link parser} attached.
 		 * @type {Serial}
 		 */
-		this.serial = new Serial(this._log.child({childId: 'station.serial'}), parser())
+		this.serial = new Serial(this._log.child({childId: 'serial'}), parser())
 
 		/**
 		 * {@link Classifier} instance.
 		 * @type {Classifier}
 		 */
-		this.classifier = new Classifier(this._log.child({childId: 'station.classifier'}))
+		this.classifier = new Classifier(this._log.child({childId: 'classifier'}))
 
 		/**
 		 * {@link Backend} connector instance.
@@ -74,7 +74,7 @@ export default class Station extends EventEmitter {
 		 */
 		this.backend = new Backend(
 			this.name,
-			this._log.child({childId: 'station.backendLink'}),
+			this._log.child({childId: 'backendLink'}),
 			this.db,
 			this.logDB
 		)

@@ -58,13 +58,16 @@ export default class Replicator extends EventEmitter {
 
 		this._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))
 		this._backoff.on('backoff', (retry, delay) => {
+			// Cancels current replicator if there is one (no need in keeping an errored replicator)
+			this._cancelCurrentReplicator()
+
 			// Don't signal we're connecting if we're inactive
 			if (this._state === 'inactive' || this._state === 'cleanup') {
 				return
 			}
 
 			this._log.debug('Backing off from replication', {retry, delay})
-			this._updateState('connecting')
+			this._updateState('idle')
 		})
 	}
 
@@ -75,10 +78,20 @@ export default class Replicator extends EventEmitter {
 	stop() {
 		this._log.info('Stopping replication')
 		this._updateState('inactive')
-		if (this._replication) {
-			this._replication.cancel()
-		}
+
+		this._cancelCurrentReplicator()
 		this._backoff.reset()
+	}
+
+	_cancelCurrentReplicator() {
+		if (this._replication) {
+			// Prevent the replicator from triggering the backoff
+			this._replication.removeAllListeners()
+
+			// Get rid of it
+			this._replication.cancel()
+			this._replication = undefined
+		}
 	}
 
 	/**
@@ -118,22 +131,20 @@ export default class Replicator extends EventEmitter {
 	 * @emits state(state): the state of the replicator.
 	 * @returns {Promise} resolved when the replication connection succeeds for the first time.
 	 */
-	replicate(dbName, username, password) {
+	replicate(dbUrl, username, password) {
 		// Don't try replicating when we're going away
 		if (this._state === 'cleanup') {
 			return Promise.resolve()
 		}
 
-		this._log.info('Live replication triggered', {dbName, username})
-		if (this._replication) {
-			// Stop any already running replication
-			this.stop()
-		}
+		// Stop any already running replication
+		this.stop()
 
-		this._updateState('connecting')
+		this._log.info('Live replication triggered', {dbUrl, username})
+		this._updateState('idle')
 
 		// Create the DB object here to avoid memory leaks
-		this._targetDB = getRemoteDB(dbName, username, password)
+		this._targetDB = getRemoteDB(dbUrl, username, password)
 
 		// Kick the process into action
 		return new Promise(resolve => {
@@ -153,9 +164,7 @@ export default class Replicator extends EventEmitter {
 		}
 
 		// Cancel current replicator if there is one
-		if (this._replication) {
-			this._replication.cancel()
-		}
+		this._cancelCurrentReplicator()
 
 		this._log.info('Attempting replication', {retry})
 
@@ -166,7 +175,7 @@ export default class Replicator extends EventEmitter {
 				if (!err) {
 					this._backoff.success()
 				}
-				this._updateState('pause', {err})
+				this._updateState('pause', err)
 			})
 			.on('active', () => {
 				this._backoff.success()
@@ -196,7 +205,7 @@ export default class Replicator extends EventEmitter {
 	 * @param {Boolean} [opts.retry=false] Enable PouchDB's built-in backoff algorithm.
 	 * @returns {PouchDBReplicationID}
 	 */
-	_createReplicator(opts = {live: true, retry: false}) {
+	_createReplicator(opts = {live: true, retry: false, batch_size: 20, batch_limit: 5}) { // eslint-disable-line camelcase
 		return this._sourceDB.replicate.to(
 			this._targetDB,
 			opts
@@ -210,7 +219,11 @@ export default class Replicator extends EventEmitter {
 	 * @emits state(state)
 	 */
 	_updateState(state, moreLogData) {
-		this._log.info('updateState', moreLogData, {state})
+		// Prevent infinite loops of the log replicator flipping between active and inactive
+		// Just log active/paused states when you're not switching between them or when errors occur
+		if ((state !== 'active' && state !== 'pause') || (this._state !== 'active' && this._state !== 'pause') || moreLogData) {
+			this._log.info('updateState', moreLogData, {state})
+		}
 		this._state = state
 		this.emit('state', state)
 	}
