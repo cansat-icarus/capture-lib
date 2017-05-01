@@ -106,8 +106,8 @@
         "env",
         {
           "targets": {
-            "electron": "1.4",
-            "node": 4
+            "electron": "1.6",
+            "node": 6
           },
           "modules": "commonjs"
         }
