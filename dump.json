@@ -1,0 +1,4710 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "name": "src/icarus/backend/index.js",
+    "content": "import {EventEmitter} from 'events'\nimport {stringify as qsStringify} from 'querystring'\nimport io from 'socket.io-client'\nimport {version} from '../../../package.json'\nimport passEvent from '../../lib/pass-event'\nimport Replicator from './replicator'\n\n/**\n * Handles connection with the backend.\n *\n * Responsible for establishing a WebSocket (socket.io) connection with\n * the backend and handling its requests.\n *\n * It also instantiates {@link Replicator} instances for data and log\n * replication. The stateChange events from these are forwarded as:\n * \"replicator:data:state\" and \"replicator:log:state\".\n */\nexport default class Backend extends EventEmitter {\n\t/**\n\t * Constructor.\n\t * @param {String} name Station name.\n\t * @param {Bunyan} logger Logger instance.\n\t * @param {PouchDB} dataDB Packet database.\n\t * @param {PouchDB} logDB Log entries database.\n\t */\n\tconstructor(name, logger, dataDB, logDB) {\n\t\tsuper()\n\n\t\t/**\n\t\t * Station name.\n\t\t * @type {String}\n\t\t */\n\t\tthis.name = name\n\n\t\t/**\n\t\t * Current socket connection with the backend.\n\t\t * @type {!IO}\n\t\t */\n\t\tthis._socket = undefined\n\n\t\t/**\n\t\t * Current socket state.\n\t\t * @type {String}\n\t\t */\n\t\tthis._state = 'inactive'\n\n\t\t/**\n\t\t * Logger instance.\n\t\t * @type {Bunyan}\n\t\t */\n\t\tthis._log = logger\n\n\t\t/**\n\t\t * {@link Replicator} instance for dataDB.\n\t\t * @type {Replicator}\n\t\t */\n\t\tthis.dataReplicator = new Replicator(\n\t\t\tthis._log.child({childId: 'backend.replicator:data'}),\n\t\t\tdataDB\n\t\t)\n\n\t\tpassEvent(this.dataReplicator, this, 'state', 'replicator:data:state')\n\n\t\t/**\n\t\t * {@link Replicator} instance for logDB.\n\t\t * @type {Replicator}\n\t\t */\n\t\tthis.logReplicator = new Replicator(\n\t\t\tthis._log.child({childId: 'backend.replicator:log'}),\n\t\t\tlogDB\n\t\t)\n\n\t\tpassEvent(this.logReplicator, this, 'state', 'replicator:log:state')\n\n\t\tthis._log.info('backend.construct')\n\t}\n\n\t/**\n\t * Connects to backend at [url].\n\t * @param {String} url Backend URL.\n\t * @emits state(socketState): socket connection/disconnection.\n\t */\n\tconnect(url) {\n\t\tthis._log.info('connect to', url)\n\n\t\tthis._socket = io(url, {\n\t\t\tquery: qsStringify({\n\t\t\t\tname: this.name\n\t\t\t\t// TODO: include auth info\n\t\t\t})\n\t\t})\n\n\t\t// Return env information\n\t\tthis._socket.on('info', cb => cb({version, name: this.name}))\n\n\t\t// Keep track of state\n\t\tthis._socket.on('reconnecting', attempt => this._updateState((this._state === 'inactive' ? 'connecting' : 'reconnecting'), {attempt}))\n\t\tthis._socket.on('reconnect_error', () => this._updateState(this._state === 'connecting' ? 'connect_error' : 'reconnect_error'))\n\t\tthis._socket.on('connect', () => this._updateState('connect'))\n\t\tthis._socket.on('disconnected', () => this._updateState('disconnect'))\n\n\t\t// Respond to replication requests\n\t\tthis._socket.on('replicate', (dataDbUrl, logDbUrl, user, pass) => {\n\t\t\tthis.dataReplicator.replicate(dataDbUrl, user, pass)\n\t\t\tthis.logReplicator.replicate(logDbUrl, user, pass)\n\t\t})\n\t}\n\n\t/**\n\t * Disconnects from the backend. Stops the socket.\n\t * The replicators will keep running until a new connection makes them\n\t * connect to a different database.\n\t * @emits state(socketState): socket connection/disconnection.\n\t */\n\tdisconnect() {\n\t\tthis._log.info('backend.disconnect')\n\n\t\t// TODO: warn disconnection through socket (soft disconnection)\n\n\t\t// Disconnect socket to stop reconnection logic\n\t\tthis._socket.disconnect()\n\n\t\t// Finally remove the socket reference here\n\t\tthis._socket = null\n\n\t\t// Stop the replicators\n\t\t// The operator may be experiencing issues and prefer to keep them off\n\t\tthis.dataReplicator.stop()\n\t\tthis.logReplicator.stop()\n\n\t\tthis._updateState('inactive')\n\t}\n\n\t/**\n\t * Triggers {@link Replicator#cleanup} on the data and log replicators.\n\t * @emits state('cleanup')\n\t * @returns {Promise}\n\t */\n\tasync cleanup() {\n\t\tthis._log.info('backend.cleanup')\n\t\tthis._updateState('cleanup')\n\n\t\t// Cleanup replicators\n\t\tawait Promise.all([\n\t\t\tthis.dataReplicator.cleanup(),\n\t\t\tthis.logReplicator.cleanup()\n\t\t])\n\n\t\t// TODO: soft-disconnect (maybe?)\n\t}\n\n\t/**\n\t * Updates the socket state.\n\t * @protected\n\t * @param {String} state New Backend state.\n\t * @param {Object} [extraData] Extra data related to the new state (error, no. of connection attempts...) to be included in logs.\n\t * @emits state(socketState): socket connection/disconnection.\n\t */\n\t_updateState(state, extraData) {\n\t\tthis._log.info('updateState', state, extraData)\n\t\tthis._state = state\n\t\tthis.emit('state', state)\n\t}\n}\n",
+    "static": true,
+    "longname": "src/icarus/backend/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 1,
+    "kind": "class",
+    "name": "Backend",
+    "memberof": "src/icarus/backend/index.js",
+    "static": true,
+    "longname": "src/icarus/backend/index.js~Backend",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/backend/index.js",
+    "importStyle": "Backend",
+    "description": "Handles connection with the backend.\n\nResponsible for establishing a WebSocket (socket.io) connection with\nthe backend and handling its requests.\n\nIt also instantiates {@link Replicator} instances for data and log\nreplication. The stateChange events from these are forwarded as:\n\"replicator:data:state\" and \"replicator:log:state\".",
+    "lineNumber": 18,
+    "interface": false,
+    "extends": [
+      "events~EventEmitter"
+    ]
+  },
+  {
+    "__docId__": 2,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#constructor",
+    "access": null,
+    "description": "Constructor.",
+    "lineNumber": 26,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "name",
+        "description": "Station name."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Bunyan"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "logger",
+        "description": "Logger instance."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "PouchDB"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "dataDB",
+        "description": "Packet database."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "PouchDB"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "logDB",
+        "description": "Log entries database."
+      }
+    ]
+  },
+  {
+    "__docId__": 3,
+    "kind": "member",
+    "name": "name",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#name",
+    "access": null,
+    "description": "Station name.",
+    "lineNumber": 33,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 4,
+    "kind": "member",
+    "name": "_socket",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_socket",
+    "access": null,
+    "description": "Current socket connection with the backend.",
+    "lineNumber": 39,
+    "type": {
+      "nullable": false,
+      "types": [
+        "IO"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 5,
+    "kind": "member",
+    "name": "_state",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_state",
+    "access": null,
+    "description": "Current socket state.",
+    "lineNumber": 45,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 6,
+    "kind": "member",
+    "name": "_log",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_log",
+    "access": null,
+    "description": "Logger instance.",
+    "lineNumber": 51,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Bunyan"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 7,
+    "kind": "member",
+    "name": "dataReplicator",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#dataReplicator",
+    "access": null,
+    "description": "{@link Replicator} instance for dataDB.",
+    "lineNumber": 57,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Replicator"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 8,
+    "kind": "member",
+    "name": "logReplicator",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#logReplicator",
+    "access": null,
+    "description": "{@link Replicator} instance for logDB.",
+    "lineNumber": 68,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Replicator"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 9,
+    "kind": "method",
+    "name": "connect",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#connect",
+    "access": null,
+    "description": "Connects to backend at [url].",
+    "lineNumber": 83,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "url",
+        "description": "Backend URL."
+      }
+    ],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state(socketState): socket connection/disconnection."
+      }
+    ]
+  },
+  {
+    "__docId__": 10,
+    "kind": "member",
+    "name": "_socket",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_socket",
+    "access": null,
+    "description": null,
+    "lineNumber": 86,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 11,
+    "kind": "method",
+    "name": "disconnect",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#disconnect",
+    "access": null,
+    "description": "Disconnects from the backend. Stops the socket.\nThe replicators will keep running until a new connection makes them\nconnect to a different database.",
+    "lineNumber": 115,
+    "params": [],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state(socketState): socket connection/disconnection."
+      }
+    ]
+  },
+  {
+    "__docId__": 12,
+    "kind": "member",
+    "name": "_socket",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_socket",
+    "access": null,
+    "description": null,
+    "lineNumber": 124,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 13,
+    "kind": "method",
+    "name": "cleanup",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "generator": false,
+    "async": true,
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#cleanup",
+    "access": null,
+    "description": "Triggers {@link Replicator#cleanup} on the data and log replicators.",
+    "lineNumber": 139,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Promise}"
+      }
+    ],
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": ""
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state('cleanup')"
+      }
+    ]
+  },
+  {
+    "__docId__": 14,
+    "kind": "method",
+    "name": "_updateState",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_updateState",
+    "access": "protected",
+    "description": "Updates the socket state.",
+    "lineNumber": 159,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "state",
+        "description": "New Backend state."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "extraData",
+        "description": "Extra data related to the new state (error, no. of connection attempts...) to be included in logs."
+      }
+    ],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state(socketState): socket connection/disconnection."
+      }
+    ]
+  },
+  {
+    "__docId__": 15,
+    "kind": "member",
+    "name": "_state",
+    "memberof": "src/icarus/backend/index.js~Backend",
+    "static": false,
+    "longname": "src/icarus/backend/index.js~Backend#_state",
+    "access": null,
+    "description": null,
+    "lineNumber": 161,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "file",
+    "name": "src/icarus/backend/replicator.js",
+    "content": "import {EventEmitter} from 'events'\nimport ExponentialBackoff from '../../lib/backoff-wrapper'\nimport {getRemoteDB} from '../../lib/db'\n\n/**\n * Handles replication between a local and remote PouchDB database.\n * Keeps track of state, uses an {@link ExponentialBackoff} to prevent\n * connection saturation, serving as a wrapper over PouchDB replication.\n *\n * The source database is set once in the constructor and remains unchanged\n * and unchangeable during operation.\n */\nexport default class Replicator extends EventEmitter {\n\n\t/**\n\t * @param {Logger} logger Bunyan logger instance.\n\t * @param {PouchDB} sourceDB Database to be replicated.\n\t */\n\tconstructor(logger, sourceDB) {\n\t\tsuper()\n\n\t\t/**\n\t\t * Logger instance.\n\t\t * @type {Bunyan}\n\t\t */\n\t\tthis._log = logger\n\n\t\t/**\n\t\t * Replicator status.\n\t\t * @type {String}\n\t\t */\n\t\tthis._state = 'inactive'\n\n\t\t/**\n\t\t * Source database.\n\t\t * @type {PouchDB}\n\t\t */\n\t\tthis._sourceDB = sourceDB\n\n\t\t/**\n\t\t * Target database.\n\t\t * @type {!PouchDB}\n\t\t */\n\t\tthis._targetDB = undefined\n\n\t\t/**\n\t\t * ExponentialBackoff instance.\n\t\t * Keeps track of the replication backoff.\n\t\t * @type {ExponentialBackoff}\n\t\t */\n\t\tthis._backoff = new ExponentialBackoff()\n\n\t\t/**\n\t\t * PouchDB replication instance/ID.\n\t\t * @type {!PouchDBReplicationID}\n\t\t */\n\t\tthis._replication = undefined\n\n\t\tthis._backoff.on('retry', retry => setImmediate(() => this._ensureReplication(retry)))\n\t\tthis._backoff.on('backoff', (retry, delay) => {\n\t\t\t// Cancels current replicator if there is one (no need in keeping an errored replicator)\n\t\t\tthis._cancelCurrentReplicator()\n\n\t\t\t// Don't signal we're connecting if we're inactive\n\t\t\tif (this._state === 'inactive' || this._state === 'cleanup') {\n\t\t\t\treturn\n\t\t\t}\n\n\t\t\tthis._log.debug('Backing off from replication', {retry, delay})\n\t\t\tthis._updateState('idle')\n\t\t})\n\t}\n\n\t/**\n\t * Stops the replication process.\n\t * @emits state('inactive')\n\t */\n\tstop() {\n\t\tthis._log.info('Stopping replication')\n\t\tthis._updateState('inactive')\n\n\t\tthis._cancelCurrentReplicator()\n\t\tthis._backoff.reset()\n\t}\n\n\t_cancelCurrentReplicator() {\n\t\tif (this._replication) {\n\t\t\t// Prevent the replicator from triggering the backoff\n\t\t\tthis._replication.removeAllListeners()\n\n\t\t\t// Get rid of it\n\t\t\tthis._replication.cancel()\n\t\t\tthis._replication = undefined\n\t\t}\n\t}\n\n\t/**\n\t * Stops current replication and attempts last-minute replication.\n\t * Last-minute replication is done in \"one-shot\" mode: replicates whatever data it has\n\t * and immediately stops without listening for changes in the local database.\n\t * @emits state('cleanup')\n\t * @returns {Promise}\n\t */\n\tasync cleanup() {\n\t\t// Before doing anything, stop!\n\t\tthis.stop()\n\n\t\tthis._log.info('cleanup')\n\t\tthis._updateState('cleanup')\n\n\t\tlet ok = false\n\t\ttry {\n\t\t\t// Before going away attempt one last replication to get the remaining data out\n\t\t\tok = (await this._createReplicator({live: false, retry: true})).ok\n\t\t} catch (err) {\n\t\t\tthis._log.warn('Error in last-minute replication', {err})\n\t\t}\n\n\t\tif (ok) {\n\t\t\tthis._log.info('Last minute replication successful')\n\t\t} else {\n\t\t\tthis._log.warn('Last minute replication failed')\n\t\t}\n\t}\n\n\t/**\n\t * Starts replication to a remote database.\n\t * @param {String} dbName Name/URL of the remote database.\n\t * @param {String} [username] Database username, if applicable.\n\t * @param {String} [password] Database password, if applicable.\n\t * @emits state(state): the state of the replicator.\n\t * @returns {Promise} resolved when the replication connection succeeds for the first time.\n\t */\n\treplicate(dbUrl, username, password) {\n\t\t// Don't try replicating when we're going away\n\t\tif (this._state === 'cleanup') {\n\t\t\treturn Promise.resolve()\n\t\t}\n\n\t\t// Stop any already running replication\n\t\tthis.stop()\n\n\t\tthis._log.info('Live replication triggered', {dbUrl, username})\n\t\tthis._updateState('idle')\n\n\t\t// Create the DB object here to avoid memory leaks\n\t\tthis._targetDB = getRemoteDB(dbUrl, username, password)\n\n\t\t// Kick the process into action\n\t\treturn new Promise(resolve => {\n\t\t\tthis._backoff.once('success', resolve)\n\t\t\tthis._backoff.backoff()\n\t\t})\n\t}\n\n\t/**\n\t * Restarts the replication process when unintentionally stopped.\n\t * @param {Number} retry Retry counter\n\t */\n\t_ensureReplication(retry) {\n\t\t// Don't re-create a replicator that is not meant to be\n\t\tif (this._state === 'inactive' || this._state === 'cleanup' || !this._targetDB) {\n\t\t\treturn\n\t\t}\n\n\t\t// Cancel current replicator if there is one\n\t\tthis._cancelCurrentReplicator()\n\n\t\tthis._log.info('Attempting replication', {retry})\n\n\t\t// (re)create replicator and listen to events for state magic\n\t\tthis._updateState('connecting')\n\t\tthis._replication = this._createReplicator()\n\t\t\t.on('paused', err => {\n\t\t\t\tif (!err) {\n\t\t\t\t\tthis._backoff.success()\n\t\t\t\t}\n\t\t\t\tthis._updateState('pause', err)\n\t\t\t})\n\t\t\t.on('active', () => {\n\t\t\t\tthis._backoff.success()\n\t\t\t\tthis._updateState('active')\n\t\t\t})\n\t\t\t.on('denied', err => {\n\t\t\t\t// This is not fatal for the replicator but is a pretty bad sign\n\t\t\t\tthis._log.error('Replication denied', err)\n\t\t\t})\n\t\t\t.once('error', err => {\n\t\t\t\t// This instance is bad, discard and recreate it with exponential backoff\n\t\t\t\tthis._log.warn('Replication error', err)\n\t\t\t\tthis._backoff.backoff()\n\t\t\t})\n\t\t\t.once('complete', () => {\n\t\t\t\t// This instance is bad, discard and recreate it with exponential backoff\n\t\t\t\tthis._log.warn('Replication canceled/completed')\n\t\t\t\tthis._backoff.backoff()\n\t\t\t})\n\t}\n\n\t/**\n\t * Creates a new PouchDB replicator.\n\t * Remember that this class is simply a wrapper.\n\t * @param {Object} [opts] PouchDB replication options.\n\t * @param {Boolean} [opts.live=true] Keep the replication running, pushing changes as they happen.\n\t * @param {Boolean} [opts.retry=false] Enable PouchDB's built-in backoff algorithm.\n\t * @returns {PouchDBReplicationID}\n\t */\n\t_createReplicator(opts = {live: true, retry: false, batch_size: 20, batch_limit: 5}) { // eslint-disable-line camelcase\n\t\treturn this._sourceDB.replicate.to(\n\t\t\tthis._targetDB,\n\t\t\topts\n\t\t)\n\t}\n\n\t/**\n\t * Updates the Replicator's {@link Replicator#_state}.\n\t * @param {String} state New state.\n\t * @param {Object} [moreLogData] Extra data to be included in the log.\n\t * @emits state(state)\n\t */\n\t_updateState(state, moreLogData) {\n\t\t// Prevent infinite loops of the log replicator flipping between active and inactive\n\t\t// Just log active/paused states when you're not switching between them or when errors occur\n\t\tif ((state !== 'active' && state !== 'pause') || (this._state !== 'active' && this._state !== 'pause') || moreLogData) {\n\t\t\tthis._log.info('updateState', moreLogData, {state})\n\t\t}\n\t\tthis._state = state\n\t\tthis.emit('state', state)\n\t}\n}\n",
+    "static": true,
+    "longname": "src/icarus/backend/replicator.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 17,
+    "kind": "class",
+    "name": "Replicator",
+    "memberof": "src/icarus/backend/replicator.js",
+    "static": true,
+    "longname": "src/icarus/backend/replicator.js~Replicator",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/backend/replicator.js",
+    "importStyle": "Replicator",
+    "description": "Handles replication between a local and remote PouchDB database.\nKeeps track of state, uses an {@link ExponentialBackoff} to prevent\nconnection saturation, serving as a wrapper over PouchDB replication.\n\nThe source database is set once in the constructor and remains unchanged\nand unchangeable during operation.",
+    "lineNumber": 13,
+    "interface": false,
+    "extends": [
+      "events~EventEmitter"
+    ]
+  },
+  {
+    "__docId__": 18,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#constructor",
+    "access": null,
+    "description": "",
+    "lineNumber": 19,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Logger"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "logger",
+        "description": "Bunyan logger instance."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "PouchDB"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "sourceDB",
+        "description": "Database to be replicated."
+      }
+    ]
+  },
+  {
+    "__docId__": 19,
+    "kind": "member",
+    "name": "_log",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_log",
+    "access": null,
+    "description": "Logger instance.",
+    "lineNumber": 26,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Bunyan"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 20,
+    "kind": "member",
+    "name": "_state",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_state",
+    "access": null,
+    "description": "Replicator status.",
+    "lineNumber": 32,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 21,
+    "kind": "member",
+    "name": "_sourceDB",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_sourceDB",
+    "access": null,
+    "description": "Source database.",
+    "lineNumber": 38,
+    "type": {
+      "nullable": null,
+      "types": [
+        "PouchDB"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 22,
+    "kind": "member",
+    "name": "_targetDB",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_targetDB",
+    "access": null,
+    "description": "Target database.",
+    "lineNumber": 44,
+    "type": {
+      "nullable": false,
+      "types": [
+        "PouchDB"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 23,
+    "kind": "member",
+    "name": "_backoff",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_backoff",
+    "access": null,
+    "description": "ExponentialBackoff instance.\nKeeps track of the replication backoff.",
+    "lineNumber": 51,
+    "type": {
+      "nullable": null,
+      "types": [
+        "ExponentialBackoff"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 24,
+    "kind": "member",
+    "name": "_replication",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_replication",
+    "access": null,
+    "description": "PouchDB replication instance/ID.",
+    "lineNumber": 57,
+    "type": {
+      "nullable": false,
+      "types": [
+        "PouchDBReplicationID"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 25,
+    "kind": "method",
+    "name": "stop",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#stop",
+    "access": null,
+    "description": "Stops the replication process.",
+    "lineNumber": 78,
+    "params": [],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state('inactive')"
+      }
+    ]
+  },
+  {
+    "__docId__": 26,
+    "kind": "method",
+    "name": "_cancelCurrentReplicator",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_cancelCurrentReplicator",
+    "access": null,
+    "description": null,
+    "lineNumber": 86,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": []
+  },
+  {
+    "__docId__": 27,
+    "kind": "member",
+    "name": "_replication",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_replication",
+    "access": null,
+    "description": null,
+    "lineNumber": 93,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 28,
+    "kind": "method",
+    "name": "cleanup",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": true,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#cleanup",
+    "access": null,
+    "description": "Stops current replication and attempts last-minute replication.\nLast-minute replication is done in \"one-shot\" mode: replicates whatever data it has\nand immediately stops without listening for changes in the local database.",
+    "lineNumber": 104,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Promise}"
+      }
+    ],
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": ""
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state('cleanup')"
+      }
+    ]
+  },
+  {
+    "__docId__": 29,
+    "kind": "method",
+    "name": "replicate",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#replicate",
+    "access": null,
+    "description": "Starts replication to a remote database.",
+    "lineNumber": 134,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Promise} resolved when the replication connection succeeds for the first time."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "dbName",
+        "description": "Name/URL of the remote database."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "username",
+        "description": "Database username, if applicable."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "password",
+        "description": "Database password, if applicable."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "resolved when the replication connection succeeds for the first time."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state(state): the state of the replicator."
+      }
+    ]
+  },
+  {
+    "__docId__": 30,
+    "kind": "member",
+    "name": "_targetDB",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_targetDB",
+    "access": null,
+    "description": null,
+    "lineNumber": 147,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 31,
+    "kind": "method",
+    "name": "_ensureReplication",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_ensureReplication",
+    "access": null,
+    "description": "Restarts the replication process when unintentionally stopped.",
+    "lineNumber": 160,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "retry",
+        "description": "Retry counter"
+      }
+    ]
+  },
+  {
+    "__docId__": 32,
+    "kind": "member",
+    "name": "_replication",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_replication",
+    "access": null,
+    "description": null,
+    "lineNumber": 173,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 33,
+    "kind": "method",
+    "name": "_createReplicator",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_createReplicator",
+    "access": null,
+    "description": "Creates a new PouchDB replicator.\nRemember that this class is simply a wrapper.",
+    "lineNumber": 208,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{PouchDBReplicationID}"
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "opts",
+        "description": "PouchDB replication options."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Boolean"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "true",
+        "defaultRaw": true,
+        "name": "opts.live",
+        "description": "Keep the replication running, pushing changes as they happen."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Boolean"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "false",
+        "defaultRaw": false,
+        "name": "opts.retry",
+        "description": "Enable PouchDB's built-in backoff algorithm."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "PouchDBReplicationID"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 34,
+    "kind": "method",
+    "name": "_updateState",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_updateState",
+    "access": null,
+    "description": "Updates the Replicator's {@link Replicator#_state}.",
+    "lineNumber": 221,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "state",
+        "description": "New state."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "moreLogData",
+        "description": "Extra data to be included in the log."
+      }
+    ],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "state(state)"
+      }
+    ]
+  },
+  {
+    "__docId__": 35,
+    "kind": "member",
+    "name": "_state",
+    "memberof": "src/icarus/backend/replicator.js~Replicator",
+    "static": false,
+    "longname": "src/icarus/backend/replicator.js~Replicator#_state",
+    "access": null,
+    "description": null,
+    "lineNumber": 227,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 36,
+    "kind": "file",
+    "name": "src/icarus/classifier/index.js",
+    "content": "import {EventEmitter} from 'events'\nimport {get} from 'object-path'\n\nimport packetHeuristicsConfig from './packet-heuristics'\n\n/**\n * Calculates packet and station scores.\n * Not an AI classifier.\n * Packet scores are calculated based on the CRC checksum(60%)\n * and simple heuristics(min/max value, variation between packets)(40%).\n * The heuristics used are configured in the packet-heuristics.js map.\n * Station scores are calculated based on the average packet score. The weight of\n * each packet score is determined by the racional function 1/2x where x is a\n * positive non-zero integer that represents how recent the packet is (1 being the\n * most recent packet).\n */\nexport default class Classifier extends EventEmitter {\n\t/**\n\t * Constructor.\n\t * @param {Bunyan} logger Logger instance.\n\t */\n\tconstructor(logger) {\n\t\tsuper()\n\n\t\t/**\n\t\t * The station score.\n\t\t * @type {!Number}\n\t\t */\n\t\tthis.stationScore = undefined\n\n\t\t/**\n\t\t * The last data received (all packets merge in here).\n\t\t * Used for heuristic algorithms.\n\t\t * @type {Object}\n\t\t */\n\t\tthis._lastData = Object.create(null)\n\n\t\t/**\n\t\t * Logger instance.\n\t\t * @type {Bunyan}\n\t\t */\n\t\tthis._log = logger\n\n\t\tthis._log.info('classifier.construct')\n\t\tthis._log.debug('classifier config', {packetHeuristicsConfig})\n\t}\n\n\t/**\n\t * Classifies one packet and updates the station score (unless told otherwise).\n\t * Packet scores are calculated based on the CRC checksum(60%)\n\t * and simple heuristics(min/max value, variation between packets)(40%).\n\t * @param {Object} packet The packet to classify.\n\t * @param {Boolean} [updateStationClassification=true] Whether to update the station score.\n\t * @emits stationScore(stationScore): when updateStationClassification is true, the station score is updated and the event is fired.\n\t * @returns {Number} Packet score.\n\t */\n\tclassifyPacket(packet, updateStationClassification = true) {\n\t\tthis._log.info('classifier.classifyPacket', {updateStationClassification})\n\t\tthis._log.debug('classifier.classifyPacket', {packet})\n\t\tlet score = 0\n\n\t\t// Iterate and run each heuristic\n\t\tlet heuristicCount = 0\n\t\tfor (const [fields, heuristics] of packetHeuristicsConfig) {\n\t\t\tfor (const field of fields) {\n\t\t\t\t// Get field current value\n\t\t\t\tconst val = get(packet, field)\n\n\t\t\t\t// When there is no value, the field does not exist => wrong kind of packet.\n\t\t\t\tif (val === undefined) {\n\t\t\t\t\tthis._log.debug('no value, skipping heuristics for', field, {val})\n\t\t\t\t\tcontinue\n\t\t\t\t}\n\n\t\t\t\t// Get last values\n\t\t\t\tconst lastVal = get(this._lastData, field, val)\n\n\t\t\t\tfor (const heuristic of heuristics) {\n\t\t\t\t\theuristicCount++\n\t\t\t\t\tthis._log.trace('Running heuristic', heuristic.name)\n\t\t\t\t\tscore += heuristic(val, lastVal)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// Bump score to a 0-40 range\n\t\tscore *= 40 / heuristicCount\n\n\t\t// The CRC accounts for 60% of the score, unless there are no heuristics\n\t\tif (packet.crc.sent === packet.crc.local) {\n\t\t\tif (score === Infinity || score === -Infinity || isNaN(score)) {\n\t\t\t\tscore = 100\n\t\t\t} else {\n\t\t\t\tscore += 60\n\t\t\t}\n\t\t} else if (score === Infinity || score === -Infinity || isNaN(score)) {\n\t\t\tscore = 0\n\t\t}\n\n\t\t// Update station classification\n\t\tif (updateStationClassification) {\n\t\t\tthis.classifyStationInc(score)\n\t\t}\n\n\t\t// Update _lastData with the current packet fields\n\t\tObject.assign(this._lastData, packet)\n\n\t\treturn score\n\t}\n\n\t/**\n\t * Updates the station score(incrementally).\n\t * Station scores are calculated based on the average packet score. The weight of\n\t * each packet score is determined by the racional function 1/2x where x is a\n\t * positive non-zero integer that represents how recent the packet is (1 being the\n\t * most recent packet).\n\t * @param {Number} packetScore The score of the previously unnacounted packet.\n\t * @returns {Number} New station score.\n\t * @emits stationScore(stationScore): because the station score was updated.\n\t */\n\tclassifyStationInc(packetScore) {\n\t\tif (this.stationScore === undefined) {\n\t\t\tthis.stationScore = packetScore\n\t\t} else {\n\t\t\tthis.stationScore += packetScore\n\t\t\tthis.stationScore /= 2\n\t\t}\n\n\t\t// Warn about the change\n\t\tthis.emit('stationScore', this.stationScore)\n\n\t\treturn this.stationScore\n\t}\n}\n",
+    "static": true,
+    "longname": "src/icarus/classifier/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 37,
+    "kind": "class",
+    "name": "Classifier",
+    "memberof": "src/icarus/classifier/index.js",
+    "static": true,
+    "longname": "src/icarus/classifier/index.js~Classifier",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/classifier/index.js",
+    "importStyle": "Classifier",
+    "description": "Calculates packet and station scores.\nNot an AI classifier.\nPacket scores are calculated based on the CRC checksum(60%)\nand simple heuristics(min/max value, variation between packets)(40%).\nThe heuristics used are configured in the packet-heuristics.js map.\nStation scores are calculated based on the average packet score. The weight of\neach packet score is determined by the racional function 1/2x where x is a\npositive non-zero integer that represents how recent the packet is (1 being the\nmost recent packet).",
+    "lineNumber": 17,
+    "interface": false,
+    "extends": [
+      "events~EventEmitter"
+    ]
+  },
+  {
+    "__docId__": 38,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#constructor",
+    "access": null,
+    "description": "Constructor.",
+    "lineNumber": 22,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Bunyan"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "logger",
+        "description": "Logger instance."
+      }
+    ]
+  },
+  {
+    "__docId__": 39,
+    "kind": "member",
+    "name": "stationScore",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#stationScore",
+    "access": null,
+    "description": "The station score.",
+    "lineNumber": 29,
+    "type": {
+      "nullable": false,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 40,
+    "kind": "member",
+    "name": "_lastData",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#_lastData",
+    "access": null,
+    "description": "The last data received (all packets merge in here).\nUsed for heuristic algorithms.",
+    "lineNumber": 36,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 41,
+    "kind": "member",
+    "name": "_log",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#_log",
+    "access": null,
+    "description": "Logger instance.",
+    "lineNumber": 42,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Bunyan"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 42,
+    "kind": "method",
+    "name": "classifyPacket",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#classifyPacket",
+    "access": null,
+    "description": "Classifies one packet and updates the station score (unless told otherwise).\nPacket scores are calculated based on the CRC checksum(60%)\nand simple heuristics(min/max value, variation between packets)(40%).",
+    "lineNumber": 57,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Number} Packet score."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "packet",
+        "description": "The packet to classify."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Boolean"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "true",
+        "defaultRaw": true,
+        "name": "updateStationClassification",
+        "description": "Whether to update the station score."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "Packet score."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stationScore(stationScore): when updateStationClassification is true, the station score is updated and the event is fired."
+      }
+    ]
+  },
+  {
+    "__docId__": 43,
+    "kind": "method",
+    "name": "classifyStationInc",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#classifyStationInc",
+    "access": null,
+    "description": "Updates the station score(incrementally).\nStation scores are calculated based on the average packet score. The weight of\neach packet score is determined by the racional function 1/2x where x is a\npositive non-zero integer that represents how recent the packet is (1 being the\nmost recent packet).",
+    "lineNumber": 121,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Number} New station score."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "packetScore",
+        "description": "The score of the previously unnacounted packet."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "New station score."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stationScore(stationScore): because the station score was updated."
+      }
+    ]
+  },
+  {
+    "__docId__": 44,
+    "kind": "member",
+    "name": "stationScore",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#stationScore",
+    "access": null,
+    "description": null,
+    "lineNumber": 123,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 45,
+    "kind": "member",
+    "name": "stationScore",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#stationScore",
+    "access": null,
+    "description": null,
+    "lineNumber": 125,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 46,
+    "kind": "member",
+    "name": "stationScore",
+    "memberof": "src/icarus/classifier/index.js~Classifier",
+    "static": false,
+    "longname": "src/icarus/classifier/index.js~Classifier#stationScore",
+    "access": null,
+    "description": null,
+    "lineNumber": 126,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 47,
+    "kind": "file",
+    "name": "src/icarus/classifier/packet-heuristics.js",
+    "content": "/**\n * Heuristic creation helper.\n * Fails when value leaves a certain interval: [min, max].\n * @param {Number} min Minimum value.\n * @param {Number} max Maximum value.\n * @returns {Function} The heuristic function.\n * @private\n */\nfunction minmaxH(min, max) {\n\treturn val => val >= min && val <= max\n}\n\n/**\n * Heuristic creation helper.\n * Fails when a value jumps up or down a number greater than [variation].\n * @param {Number} variation Maximum variation between packets to be expected.\n * @returns {Function} The heuristic function.\n * @private\n */\nfunction variationH(variation) {\n\treturn (val, lastVal) => Math.abs(val - lastVal) <= variation\n}\n\n/**\n * The heuristic algorithms to be used in each field.\n * Format: [ [...fields], [...heuristics] ].\n */\nexport default new Map([\n\t[['counter', 'sentAt.millis'], [variationH(1)]],\n\t[['temp.0', 'temp.1'], [minmaxH(10, 37), variationH(10)]],\n\t[['press.0', 'press.1'], [minmaxH(0, 2000), variationH(100)]]\n])\n",
+    "static": true,
+    "longname": "src/icarus/classifier/packet-heuristics.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 48,
+    "kind": "function",
+    "name": "minmaxH",
+    "memberof": "src/icarus/classifier/packet-heuristics.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/classifier/packet-heuristics.js~minmaxH",
+    "access": "private",
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/classifier/packet-heuristics.js",
+    "importStyle": null,
+    "description": "Heuristic creation helper.\nFails when value leaves a certain interval: [min, max].",
+    "lineNumber": 9,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Function} The heuristic function."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "min",
+        "description": "Minimum value."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "max",
+        "description": "Maximum value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Function"
+      ],
+      "spread": false,
+      "description": "The heuristic function."
+    }
+  },
+  {
+    "__docId__": 49,
+    "kind": "function",
+    "name": "variationH",
+    "memberof": "src/icarus/classifier/packet-heuristics.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/classifier/packet-heuristics.js~variationH",
+    "access": "private",
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/classifier/packet-heuristics.js",
+    "importStyle": null,
+    "description": "Heuristic creation helper.\nFails when a value jumps up or down a number greater than [variation].",
+    "lineNumber": 20,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Function} The heuristic function."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "variation",
+        "description": "Maximum variation between packets to be expected."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Function"
+      ],
+      "spread": false,
+      "description": "The heuristic function."
+    }
+  },
+  {
+    "__docId__": 50,
+    "kind": "file",
+    "name": "src/icarus/data-handler/cansat-strings.js",
+    "content": "/**\n * Array of CanSat strings: informational messages.\n * The CanSat does not store nor send strings. It just works\n * with small integers (uint8_t) and sends them in place.\n * In the ground station, these identifiers are used to retrieve the correct\n * string representation.\n *\n * These correspond to informational messages, sent in PACKET_INFO packets\n */\nexport const messages = [\n\t'Unknown message/error.',\n\t'No DS18B20 sensors found. [temperature]',\n\t'Only one DS18B20 sensor found. [temperature]'\n]\n\n/**\n * Array of CanSat strings: module names.\n * The CanSat does not store nor send strings. It just works\n * with small integers (uint8_t) and sends them in place.\n * In the ground station, these identifiers are used to retrieve the correct\n * string representation.\n *\n * These correspond to module names (as in ModuleRegistry modules), sent in PACKET_SETTINGS packets.\n */\nexport const moduleNames = [\n\t'Status LED',\n\t'Telemetry packet routine',\n\t'Temperature update',\n\t'Pressure update'\n\t// TODO: update\n]\n",
+    "static": true,
+    "longname": "src/icarus/data-handler/cansat-strings.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 51,
+    "kind": "variable",
+    "name": "messages",
+    "memberof": "src/icarus/data-handler/cansat-strings.js",
+    "static": true,
+    "longname": "src/icarus/data-handler/cansat-strings.js~messages",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/cansat-strings.js",
+    "importStyle": "{messages}",
+    "description": "Array of CanSat strings: informational messages.\nThe CanSat does not store nor send strings. It just works\nwith small integers (uint8_t) and sends them in place.\nIn the ground station, these identifiers are used to retrieve the correct\nstring representation.\n\nThese correspond to informational messages, sent in PACKET_INFO packets",
+    "lineNumber": 10,
+    "type": {
+      "types": [
+        "string[]"
+      ]
+    }
+  },
+  {
+    "__docId__": 52,
+    "kind": "variable",
+    "name": "moduleNames",
+    "memberof": "src/icarus/data-handler/cansat-strings.js",
+    "static": true,
+    "longname": "src/icarus/data-handler/cansat-strings.js~moduleNames",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/cansat-strings.js",
+    "importStyle": "{moduleNames}",
+    "description": "Array of CanSat strings: module names.\nThe CanSat does not store nor send strings. It just works\nwith small integers (uint8_t) and sends them in place.\nIn the ground station, these identifiers are used to retrieve the correct\nstring representation.\n\nThese correspond to module names (as in ModuleRegistry modules), sent in PACKET_SETTINGS packets.",
+    "lineNumber": 25,
+    "type": {
+      "types": [
+        "string[]"
+      ]
+    }
+  },
+  {
+    "__docId__": 53,
+    "kind": "file",
+    "name": "src/icarus/data-handler/index.js",
+    "content": "import {v4 as uuid} from 'uuid'\n\nimport IcarusParser from './parser'\n\n/**\n * 'Transceiver MODE' Buffer for future comparison.\n * Helps ignoring messages from transceiver.\n * @private\n * @type {Buffer}\n */\n// TODO: check with the CanSat on: is this what we receive?\nconst tmBuffer = Buffer.from('Transceiver MODE')\n\n/**\n * Creates and returns a \"byteDelimiter\" parser.\n * DISCLAIMER: It's a patched version of node-serialport's byteDelimiter parser.\n * You can find it's source here: https://github.com/EmergingTechnologyAdvisors/node-serialport/tree/master/lib/parsers.js\n * Changes from the original: trailing delimiters are removed, buffer passes through packetParser.parse before being emitted\n * and empty buffers and 'Transceiver MODE' messages are ignored.\n * Separates packets by a byte delimiter and passes them through {@link packetParser}\n * @returns {Function} The parser itself\n */\n/*\nLICENSE OF THE ORIGINAL \"byteDelimiter\" parser:\n\nCopyright 2010, 2011, 2012 Christopher Williams. All rights reserved.\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to\ndeal in the Software without restriction, including without limitation the\nrights to use, copy, modify, merge, publish, distribute, sublicense, and/or\nsell copies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\nFROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS\nIN THE SOFTWARE.\n*/\nexport function parser() {\n\tconst delimiter = [13, 10] // \\r\\n\n\tlet buf = []\n\tlet nextDelimIndex = 0\n\n\treturn (emitter, buffer) => {\n\t\tfor (let i = 0; i < buffer.length; i++) {\n\t\t\tbuf[buf.length] = buffer[i]\n\n\t\t\tif (buf[buf.length - 1] === delimiter[nextDelimIndex]) {\n\t\t\t\tnextDelimIndex++\n\t\t\t}\n\n\t\t\tif (nextDelimIndex === delimiter.length) {\n\t\t\t\t// Remove trailing 254, 255 and ignore empty packets/'Transceiver MODE'\n\t\t\t\t// Spare the parser the trouble, packets are always at least 6 bytes\n\t\t\t\tif (buf.length >= 8 && !Buffer.from(buf).equals(tmBuffer)) {\n\t\t\t\t\t// Create one packetParser object per packet\n\t\t\t\t\t// If this one crashes, the others have a chance.\n\t\t\t\t\t// It shouldn't throw any exception, but sometimes weird things happen.\n\t\t\t\t\t// Let us not forget Murphy's Law.\n\t\t\t\t\tconst packetParser = new IcarusParser()\n\n\t\t\t\t\temitter.emit('data', packetParser.parse(Buffer.from(buf.slice(0, buf.length - 2))))\n\t\t\t\t}\n\n\t\t\t\tbuf = []\n\t\t\t\tnextDelimIndex = 0\n\t\t\t}\n\t\t}\n\t}\n}\n\n/**\n * A handler for incoming {@link Serial#data}.\n * Saves packets to the local database.\n * Should be called bound to a {@link Station}.\n * @param {Object} packet Packet to be parsed and saved.\n * @return {Promise} Resolves when all is done.\n */\nexport function dataHandler(packet) {\n\t// Properly handle bad packets\n\tif (packet.type.length === 1 && packet.type !== '?') {\n\t\t// Assign packet score\n\t\tpacket.score = this.classifier.classifyPacket(packet)\n\t} else {\n\t\t// Bad packets have score 0\n\t\tpacket.score = 0\n\t\tthis.classifier.classifyStationInc(0)\n\n\t\t// Generate a mostly random id\n\t\tpacket._id = `?${packet.receivedAt}-${uuid()}`\n\t}\n\n\t// Alert UI through station\n\tthis.emit('packet', packet)\n\n\t// Save to DB\n\treturn this.db.put(packet)\n\t\t.then(() => this._log.trace('packet saved', {packet}))\n\t\t.catch(err => this._log.error(err))\n}\n",
+    "static": true,
+    "longname": "src/icarus/data-handler/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 54,
+    "kind": "variable",
+    "name": "tmBuffer",
+    "memberof": "src/icarus/data-handler/index.js",
+    "static": true,
+    "longname": "src/icarus/data-handler/index.js~tmBuffer",
+    "access": "private",
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/index.js",
+    "importStyle": null,
+    "description": "'Transceiver MODE' Buffer for future comparison.\nHelps ignoring messages from transceiver.",
+    "lineNumber": 12,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Buffer"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 55,
+    "kind": "function",
+    "name": "parser",
+    "memberof": "src/icarus/data-handler/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/index.js~parser",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/index.js",
+    "importStyle": "{parser}",
+    "description": "Creates and returns a \"byteDelimiter\" parser.\nDISCLAIMER: It's a patched version of node-serialport's byteDelimiter parser.\nYou can find it's source here: https://github.com/EmergingTechnologyAdvisors/node-serialport/tree/master/lib/parsers.js\nChanges from the original: trailing delimiters are removed, buffer passes through packetParser.parse before being emitted\nand empty buffers and 'Transceiver MODE' messages are ignored.\nSeparates packets by a byte delimiter and passes them through {@link packetParser}",
+    "lineNumber": 45,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Function} The parser itself"
+      }
+    ],
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Function"
+      ],
+      "spread": false,
+      "description": "The parser itself"
+    }
+  },
+  {
+    "__docId__": 56,
+    "kind": "function",
+    "name": "dataHandler",
+    "memberof": "src/icarus/data-handler/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/index.js~dataHandler",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/index.js",
+    "importStyle": "{dataHandler}",
+    "description": "A handler for incoming {@link Serial#data}.\nSaves packets to the local database.\nShould be called bound to a {@link Station}.",
+    "lineNumber": 85,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "packet",
+        "description": "Packet to be parsed and saved."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "Resolves when all is done."
+    }
+  },
+  {
+    "__docId__": 57,
+    "kind": "file",
+    "name": "src/icarus/data-handler/parser.js",
+    "content": "import Parser from '../../parser'\nimport * as conv from './unit-conv'\nimport {messages, moduleNames} from './cansat-strings' // eslint-disable-line import/named\n\n/**\n * The parser for Team Icarus' CanSat.\n */\nexport default class IcarusParser extends Parser {\n\t/**\n\t * Implementation of {@link Parser#parse}.\n\t * Automatically decodes the quasi-binary packet with {@link decode}.\n\t * Supports telemetry, info and settings packets.\n\t * Also converts sensor values to standard units and attaches text representations\n\t * of module names and messages.\n\t * @param {Buffer} rawPacket Packet to parse.\n\t * @returns {Object} Parsed packet.\n\t */\n\tparse(rawPacket) {\n\t\t// Decode packet\n\t\tthis._raw = Buffer.from(rawPacket.toString(), 'base64')\n\n\t\t// Parser needs to cleanup some things\n\t\tsuper.parse(this._raw)\n\n\t\t// Save raw packet (encoded version)\n\t\tthis.packet.raw = rawPacket.toJSON().data\n\n\t\t// Save receival time\n\t\tthis.packet.receivedAt = Date.now()\n\n\t\ttry {\n\t\t\t// Stop right now if there are no checksums\n\t\t\tif (!this.packet.crc) {\n\t\t\t\tthrow new Error('Missing CRC checksums')\n\t\t\t}\n\n\t\t\t// Get packet type identifier\n\t\t\tthis.readChar('type')\n\n\t\t\t// Only handle known packets\n\t\t\tif (this.packet.type === 't' || this.packet.type === 'i' || this.packet.type === 's') {\n\t\t\t\t// Now the packet counter, timestamps and alike\n\t\t\t\tthis.readUInt('counter', 4)\n\t\t\t\tthis.readUInt('sentAt.millis', 4)\n\t\t\t\tthis.readUInt('sentAt.unix', 4) // Not yet as of now\n\n\t\t\t\t// Generate the packet ID\n\t\t\t\tthis.packet._id = String(this.packet.counter)\n\t\t\t}\n\n\t\t\tswitch (this.packet.type) {\n\t\t\t\tcase 't':\n\t\t\t\t\t// Temperature\n\t\t\t\t\tthis.readInt('temp.0', 2, conv.DS18B20)\n\t\t\t\t\tthis.readInt('temp.1', 2, conv.DS18B20)\n\n\t\t\t\t\t// Pressure\n\t\t\t\t\tthis.readInt('press.0', 2, conv.MPX4115A)\n\t\t\t\t\tthis.readInt('press.1', 2, conv.MPX4115A)\n\n\t\t\t\t\t// GPS data\n\t\t\t\t\tthis.readUInt('gps.flags', 1, conv.gpsFlags)\n\n\t\t\t\t\t// GPS Latitude\n\t\t\t\t\tthis.readUInt('gps.lat.deg', 2)\n\t\t\t\t\tthis.readUInt('gps.lat.billionths', 4)\n\t\t\t\t\tthis.setValue('gps.lat', this.packet.gps.lat, conv.gpsCoordinate)\n\t\t\t\t\tif (this.packet.gps.flags.latSign) {\n\t\t\t\t\t\t// The sign bit is true = the value the negative\n\t\t\t\t\t\tthis.packet.gps.lat *= -1\n\t\t\t\t\t}\n\n\t\t\t\t\t// GPS Longitude\n\t\t\t\t\tthis.readUInt('gps.lng.deg', 2)\n\t\t\t\t\tthis.readUInt('gps.lng.billionths', 4)\n\t\t\t\t\tthis.setValue('gps.lng', this.packet.gps.lng, conv.gpsCoordinate)\n\t\t\t\t\tif (this.packet.gps.flags.lngSign) {\n\t\t\t\t\t\t// The sign bit is true = the value the negative\n\t\t\t\t\t\tthis.packet.gps.lng *= -1\n\t\t\t\t\t}\n\n\t\t\t\t\tthis.readInt('gps.speed', 4, conv.gpsSpeed)\n\t\t\t\t\tthis.readInt('gps.course', 4, conv.gpsCourse)\n\t\t\t\t\tthis.readInt('gps.altitude', 4, conv.gpsAltitude)\n\n\t\t\t\t// Acceleration\n\t\t\t\t\tthis.readInt('accel.0.x', 2, conv.LIS331HH_24G)\n\t\t\t\t\tthis.readInt('accel.0.y', 2, conv.LIS331HH_24G)\n\t\t\t\t\tthis.readInt('accel.0.z', 2, conv.LIS331HH_24G)\n\t\t\t\t\tthis.readInt('accel.1.x', 2, conv.MMA7361_6G)\n\t\t\t\t\tthis.readInt('accel.1.y', 2, conv.MMA7361_6G)\n\t\t\t\t\tthis.readInt('accel.1.z', 2, conv.MMA7361_6G)\n\t\t\t\t\tbreak\n\t\t\t\tcase 'i':\n\t\t\t\t\t// Message code and interpretation\n\t\t\t\t\tthis.readUInt('message.id')\n\t\t\t\t\tthis.setValue('message.text', messages[this.packet.message.id] || 'Unknown message')\n\t\t\t\t\tbreak\n\t\t\t\tcase 's':\n\t\t\t\t\t// Module information\n\t\t\t\t\tthis.readUInt('module.id')\n\t\t\t\t\tthis.readBoolean('module.enable')\n\t\t\t\t\tthis.readUInt('module.interval', 4)\n\t\t\t\t\tthis.readUInt('module.lastRun', 4)\n\n\t\t\t\t\t// Get module name\n\t\t\t\t\tthis.setValue('module.name', moduleNames[this.packet.module.id] || 'Unknown module')\n\t\t\t\t\tbreak\n\t\t\t\tdefault:\n\t\t\t\t\tthis.packet.type = `?[0x${this.packet.type.charCodeAt(0).toString(16)}]`\n\t\t\t\t\tbreak\n\t\t\t}\n\t\t} catch (err) {\n\t\t\t// When we can't decode it, we can't continue\n\t\t\tthis.packet.error = err.message\n\n\t\t\tthis.packet.type = '?[error]'\n\t\t}\n\n\t\treturn this.packet\n\t}\n}\n",
+    "static": true,
+    "longname": "src/icarus/data-handler/parser.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 58,
+    "kind": "class",
+    "name": "IcarusParser",
+    "memberof": "src/icarus/data-handler/parser.js",
+    "static": true,
+    "longname": "src/icarus/data-handler/parser.js~IcarusParser",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/parser.js",
+    "importStyle": "IcarusParser",
+    "description": "The parser for Team Icarus' CanSat.",
+    "lineNumber": 8,
+    "interface": false,
+    "extends": [
+      "src/parser.js~Parser"
+    ]
+  },
+  {
+    "__docId__": 59,
+    "kind": "method",
+    "name": "parse",
+    "memberof": "src/icarus/data-handler/parser.js~IcarusParser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/data-handler/parser.js~IcarusParser#parse",
+    "access": null,
+    "description": "Implementation of {@link Parser#parse}.\nAutomatically decodes the quasi-binary packet with {@link decode}.\nSupports telemetry, info and settings packets.\nAlso converts sensor values to standard units and attaches text representations\nof module names and messages.",
+    "lineNumber": 18,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Object} Parsed packet."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Buffer"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "rawPacket",
+        "description": "Packet to parse."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": "Parsed packet."
+    }
+  },
+  {
+    "__docId__": 60,
+    "kind": "member",
+    "name": "_raw",
+    "memberof": "src/icarus/data-handler/parser.js~IcarusParser",
+    "static": false,
+    "longname": "src/icarus/data-handler/parser.js~IcarusParser#_raw",
+    "access": null,
+    "description": null,
+    "lineNumber": 20,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 61,
+    "kind": "file",
+    "name": "src/icarus/data-handler/unit-conv.js",
+    "content": "/**\n * Gets one bit out of a byte/bytes.\n * @param b {Number} The byte or bytes (up to one 32bit unsigned integer).\n * @param i {Number} The bit index.\n * @return {Boolean} Bit value.\n */\nconst getBit = (b, i) => Boolean((b >> i) & 1)\n\nexport function analogToMV(analogReadResult) {\n\t// Raw values range from 0 to 1023, where 0 -> 0V and 1024 -> 5V (or 5000mV) (Arduino analogRead reference)\n\treturn (analogReadResult * 5000) / 1023\n}\n\n/**\n * Converts raw DS18B20 temperatures to ºC.\n * @param {Number} raw Raw DS18B20 temperature.\n * @return {Number} ºC temperature.\n */\nexport function DS18B20(raw) {\n\treturn raw / 128 // TODO: confirm value, that's what's done in the Arduino Library\n}\n\n/**\n * Converts raw MPX4115A temperatures to hPa.\n * @param {Number} raw Raw MPX4115A pressure.\n * @return {Number} hPa pressure.\n */\nexport function MPX4115A(raw) {\n\tlet vOut = analogToMV((5000 * raw) / 1023)\n\n\t// 204mV -> offset for minimum rated pressure (Datasheet)\n\tvOut -= 204\n\n\t// 45.9 mV/kPa (Datasheet)\n\t// 15 kPa -> minimum rated pressure (Datasheet)\n\t// last multiplication by 10: conversion from kPa to hPa (1kPa = 10hPa)\n\treturn ((vOut / 45.9) + 15) * 10\n}\n\nexport function LIS331HH_24G(raw) {\n\t// 12 mG/digit (Datasheet)\n\t// mGs, not Gs, so we need to divide by 1000\n\treturn (raw * 12) / 1000\n}\n\nexport function MMA7361_6G(raw) {\n\t// 206 mV/G (Datasheet)\n\t// 0G ≈ 1.65V or 1650mV (Datasheet)\n\treturn (analogToMV(raw) - 1650) / 206\n}\n\n/**\n * Processes the GPS boolean flags that are crammed in one byte.\n * In this order we have: latitude sign, longitude sign, location validity,\n * speed validity, course validity and altitude validity.\n * @param {Number} raw The number (0-255) containing the flags.\n * @return {Object} Flags as an object.\n */\nexport function gpsFlags(raw) {\n\treturn {\n\t\tlatSign: getBit(raw, 0),\n\t\tlngSign: getBit(raw, 1),\n\t\tlocationValid: getBit(raw, 2),\n\t\tspeedValid: getBit(raw, 3),\n\t\tcourseValid: getBit(raw, 4),\n\t\taltitudeValid: getBit(raw, 5)\n\t}\n}\n\n/**\n * Convert raw coordinate object ({deg, billionths}) into an actual latitude\n * or longitude coordinate.\n * This does not check any sign/cardinal orientation. The coordinate is always\n * positive.\n * @param {Object} raw Raw coordinate as {deg, billionths}.\n * @return {Number} The GPS coordinate.\n */\nexport function gpsCoordinate(raw) {\n\t// As it's done in TinyGPS++\n\treturn raw.deg + (raw.billionths / 1000000000.0)\n}\n\nexport function gpsSpeed(raw) {\n\t// As it's done in TinyGPS++\n\treturn (raw * 0.51444444) / 100.0\n}\n\nexport function gpsCourse(raw) {\n\t// As it's done in TinyGPS++\n\treturn raw / 100.0\n}\n\nexport function gpsAltitude(raw) {\n\t// As it's done in TinyGPS++\n\treturn raw / 100.0\n}\n",
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 62,
+    "kind": "function",
+    "name": "getBit",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~getBit",
+    "access": null,
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": null,
+    "description": "Gets one bit out of a byte/bytes.",
+    "lineNumber": 7,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "*"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "b",
+        "description": "{Number} The byte or bytes (up to one 32bit unsigned integer)."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "*"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "i",
+        "description": "{Number} The bit index."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Boolean"
+      ],
+      "spread": false,
+      "description": "Bit value."
+    }
+  },
+  {
+    "__docId__": 63,
+    "kind": "function",
+    "name": "analogToMV",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~analogToMV",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{analogToMV}",
+    "description": null,
+    "lineNumber": 9,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "analogReadResult",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 64,
+    "kind": "function",
+    "name": "DS18B20",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~DS18B20",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{DS18B20}",
+    "description": "Converts raw DS18B20 temperatures to ºC.",
+    "lineNumber": 19,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "raw",
+        "description": "Raw DS18B20 temperature."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "ºC temperature."
+    }
+  },
+  {
+    "__docId__": 65,
+    "kind": "function",
+    "name": "MPX4115A",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~MPX4115A",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{MPX4115A}",
+    "description": "Converts raw MPX4115A temperatures to hPa.",
+    "lineNumber": 28,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "raw",
+        "description": "Raw MPX4115A pressure."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "hPa pressure."
+    }
+  },
+  {
+    "__docId__": 66,
+    "kind": "function",
+    "name": "LIS331HH_24G",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~LIS331HH_24G",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{LIS331HH_24G}",
+    "description": null,
+    "lineNumber": 40,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "raw",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 67,
+    "kind": "function",
+    "name": "MMA7361_6G",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~MMA7361_6G",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{MMA7361_6G}",
+    "description": null,
+    "lineNumber": 46,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "raw",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 68,
+    "kind": "function",
+    "name": "gpsFlags",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~gpsFlags",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{gpsFlags}",
+    "description": "Processes the GPS boolean flags that are crammed in one byte.\nIn this order we have: latitude sign, longitude sign, location validity,\nspeed validity, course validity and altitude validity.",
+    "lineNumber": 59,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "raw",
+        "description": "The number (0-255) containing the flags."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": "Flags as an object."
+    }
+  },
+  {
+    "__docId__": 69,
+    "kind": "function",
+    "name": "gpsCoordinate",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~gpsCoordinate",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{gpsCoordinate}",
+    "description": "Convert raw coordinate object ({deg, billionths}) into an actual latitude\nor longitude coordinate.\nThis does not check any sign/cardinal orientation. The coordinate is always\npositive.",
+    "lineNumber": 78,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "raw",
+        "description": "Raw coordinate as {deg, billionths}."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "The GPS coordinate."
+    }
+  },
+  {
+    "__docId__": 70,
+    "kind": "function",
+    "name": "gpsSpeed",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~gpsSpeed",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{gpsSpeed}",
+    "description": null,
+    "lineNumber": 83,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "raw",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 71,
+    "kind": "function",
+    "name": "gpsCourse",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~gpsCourse",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{gpsCourse}",
+    "description": null,
+    "lineNumber": 88,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "raw",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 72,
+    "kind": "function",
+    "name": "gpsAltitude",
+    "memberof": "src/icarus/data-handler/unit-conv.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/icarus/data-handler/unit-conv.js~gpsAltitude",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/data-handler/unit-conv.js",
+    "importStyle": "{gpsAltitude}",
+    "description": null,
+    "lineNumber": 93,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "raw",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 73,
+    "kind": "file",
+    "name": "src/icarus/station.js",
+    "content": "import {EventEmitter} from 'events'\n\nimport Serial, {listPorts} from '../serial'\nimport getDB from '../lib/db'\nimport createLogger from '../lib/log'\nimport Backend from './backend'\nimport Classifier from './classifier'\nimport {parser, dataHandler} from './data-handler'\n\n// T-Minus Transceiver information\n/**\n * T-Minus Transceiver Vendor ID\n * @const\n */\nconst tMinusVid = '0x03eb'\n\n/**\n * T-Minus Transceiver Product ID\n * @const\n */\nconst tMinusPid = '0x2404'\n\n/**\n * Handles everything a Station should.\n * Brings Serial, data parsing, database saving and the backend connection together.\n */\nexport default class Station extends EventEmitter {\n\t/**\n\t * Sets up all relevant class instances (Serial, parsers...) and events listeners.\n\t * @param {String} name Station name.\n\t */\n\tconstructor(name) {\n\t\tsuper()\n\n\t\t/**\n\t\t * Name/ID of the station\n\t\t * @type {String}\n\t\t */\n\t\tthis.name = name\n\n\t\t/**\n\t\t * Database instance, internal to the station.\n\t\t * @type {PouchDB}\n\t\t */\n\t\tthis.db = getDB(`data-${name}`)\n\n\t\t/**\n\t\t * Log database instance, internal to the station.\n\t\t * @type {PouchDB}\n\t\t */\n\t\tthis.logDB = getDB(`log-${name}`)\n\n\t\t/**\n\t\t * Logger instance.\n\t\t * @type {Bunyan}\n\t\t */\n\t\tthis._log = createLogger(this.name, this.logDB)\n\n\t\t/**\n\t\t * {@link Serial} instance with the {@link parser} attached.\n\t\t * @type {Serial}\n\t\t */\n\t\tthis.serial = new Serial(this._log.child({childId: 'serial'}), parser())\n\n\t\t/**\n\t\t * {@link Classifier} instance.\n\t\t * @type {Classifier}\n\t\t */\n\t\tthis.classifier = new Classifier(this._log.child({childId: 'classifier'}))\n\n\t\t/**\n\t\t * {@link Backend} connector instance.\n\t\t * @type {Backend}\n\t\t */\n\t\tthis.backend = new Backend(\n\t\t\tthis.name,\n\t\t\tthis._log.child({childId: 'backendLink'}),\n\t\t\tthis.db,\n\t\t\tthis.logDB\n\t\t)\n\n\t\t// Handle incoming packets\n\t\tthis.serial.on('data', this::dataHandler)\n\n\t\t// The transceiver needs a bit of a kick sometimes\n\t\tthis.serial.on('stateChange', state => {\n\t\t\tif (state === 'open') {\n\t\t\t\t// Send something!\n\t\t\t\tthis.serial._port.write('hi there')\n\t\t\t}\n\t\t})\n\n\t\tthis._log.info('station.construct end')\n\t}\n\n\t/**\n\t * Returns a list of available serialports and tries to find which ones\n\t * are the T-Minus transceiver (sets [portInfo].recommend to true) and sorts\n\t * them with recommended ones first.\n\t * @return {Promise<Array>} List of serialports.\n\t */\n\tgetAvailablePorts() {\n\t\tthis._log.info('station.getAvailablePorts')\n\t\treturn listPorts()\n\t\t\t.then(list => {\n\t\t\t\tlist = list.map(port => {\n\t\t\t\t\tif (port.vendorId === tMinusVid && port.productId === tMinusPid) {\n\t\t\t\t\t\tport.recommend = true\n\t\t\t\t\t}\n\t\t\t\t\treturn port\n\t\t\t\t})\n\n\t\t\t\tlist = list.sort((p1, p2) => {\n\t\t\t\t\t// Recommended come first\n\t\t\t\t\tif (p1.recommend && !p2.recommend) {\n\t\t\t\t\t\treturn -1\n\t\t\t\t\t}\n\t\t\t\t\tif (p2.recommend && !p1.recommend) {\n\t\t\t\t\t\treturn 1\n\t\t\t\t\t}\n\n\t\t\t\t\t// Otherwise, default to alphabetical sorting\n\t\t\t\t\treturn p1.comName.localeCompare(p2.comName)\n\t\t\t\t})\n\n\t\t\t\tthis._log.debug('Available ports', {ports: list})\n\t\t\t\treturn list\n\t\t\t})\n\t}\n\n\t/**\n\t * Cleanup function to be run before exiting.\n\t * Closes the serialport and runs {@link Backend#cleanup}.\n\t * @return {Promise} Promise that completes when all is clean.\n\t */\n\tcleanup() {\n\t\tthis._log.info('station.cleanup')\n\t\treturn this.serial.close()\n\t\t\t.then(this.backend.cleanup())\n\t}\n}\n",
+    "static": true,
+    "longname": "src/icarus/station.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 74,
+    "kind": "variable",
+    "name": "tMinusVid",
+    "memberof": "src/icarus/station.js",
+    "static": true,
+    "longname": "src/icarus/station.js~tMinusVid",
+    "access": null,
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/station.js",
+    "importStyle": null,
+    "description": "T-Minus Transceiver Vendor ID",
+    "lineNumber": 15,
+    "unknown": [
+      {
+        "tagName": "@const",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "string"
+      ]
+    }
+  },
+  {
+    "__docId__": 75,
+    "kind": "variable",
+    "name": "tMinusPid",
+    "memberof": "src/icarus/station.js",
+    "static": true,
+    "longname": "src/icarus/station.js~tMinusPid",
+    "access": null,
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/station.js",
+    "importStyle": null,
+    "description": "T-Minus Transceiver Product ID",
+    "lineNumber": 21,
+    "unknown": [
+      {
+        "tagName": "@const",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "string"
+      ]
+    }
+  },
+  {
+    "__docId__": 76,
+    "kind": "class",
+    "name": "Station",
+    "memberof": "src/icarus/station.js",
+    "static": true,
+    "longname": "src/icarus/station.js~Station",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/icarus/station.js",
+    "importStyle": "Station",
+    "description": "Handles everything a Station should.\nBrings Serial, data parsing, database saving and the backend connection together.",
+    "lineNumber": 27,
+    "interface": false,
+    "extends": [
+      "events~EventEmitter"
+    ]
+  },
+  {
+    "__docId__": 77,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/icarus/station.js~Station",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/station.js~Station#constructor",
+    "access": null,
+    "description": "Sets up all relevant class instances (Serial, parsers...) and events listeners.",
+    "lineNumber": 32,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "name",
+        "description": "Station name."
+      }
+    ]
+  },
+  {
+    "__docId__": 78,
+    "kind": "member",
+    "name": "name",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#name",
+    "access": null,
+    "description": "Name/ID of the station",
+    "lineNumber": 39,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 79,
+    "kind": "member",
+    "name": "db",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#db",
+    "access": null,
+    "description": "Database instance, internal to the station.",
+    "lineNumber": 45,
+    "type": {
+      "nullable": null,
+      "types": [
+        "PouchDB"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 80,
+    "kind": "member",
+    "name": "logDB",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#logDB",
+    "access": null,
+    "description": "Log database instance, internal to the station.",
+    "lineNumber": 51,
+    "type": {
+      "nullable": null,
+      "types": [
+        "PouchDB"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 81,
+    "kind": "member",
+    "name": "_log",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#_log",
+    "access": null,
+    "description": "Logger instance.",
+    "lineNumber": 57,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Bunyan"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 82,
+    "kind": "member",
+    "name": "serial",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#serial",
+    "access": null,
+    "description": "{@link Serial} instance with the {@link parser} attached.",
+    "lineNumber": 63,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Serial"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 83,
+    "kind": "member",
+    "name": "classifier",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#classifier",
+    "access": null,
+    "description": "{@link Classifier} instance.",
+    "lineNumber": 69,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Classifier"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 84,
+    "kind": "member",
+    "name": "backend",
+    "memberof": "src/icarus/station.js~Station",
+    "static": false,
+    "longname": "src/icarus/station.js~Station#backend",
+    "access": null,
+    "description": "{@link Backend} connector instance.",
+    "lineNumber": 75,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Backend"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 85,
+    "kind": "method",
+    "name": "getAvailablePorts",
+    "memberof": "src/icarus/station.js~Station",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/station.js~Station#getAvailablePorts",
+    "access": null,
+    "description": "Returns a list of available serialports and tries to find which ones\nare the T-Minus transceiver (sets [portInfo].recommend to true) and sorts\nthem with recommended ones first.",
+    "lineNumber": 102,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise<Array>"
+      ],
+      "spread": false,
+      "description": "List of serialports."
+    }
+  },
+  {
+    "__docId__": 86,
+    "kind": "method",
+    "name": "cleanup",
+    "memberof": "src/icarus/station.js~Station",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/icarus/station.js~Station#cleanup",
+    "access": null,
+    "description": "Cleanup function to be run before exiting.\nCloses the serialport and runs {@link Backend#cleanup}.",
+    "lineNumber": 136,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "Promise that completes when all is clean."
+    }
+  },
+  {
+    "__docId__": 87,
+    "kind": "file",
+    "name": "src/index.js",
+    "content": "// Just pass through the station\n// eslint-disable-next-line object-curly-spacing\nexport default from './icarus/station'\n",
+    "static": true,
+    "longname": "src/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 88,
+    "kind": "file",
+    "name": "src/lib/backoff-wrapper.js",
+    "content": "import {EventEmitter} from 'events'\nimport ExponentialBackoffStrategy from 'backoff/lib/strategy/exponential'\n\n/*\nThis is heavily based on:\nhttps://github.com/MathieuTurcotte/node-backoff/blob/master/lib/backoff.js\n\n...which holds the following 2-line copyright notice:\nCopyright (c) 2012 Mathieu Turcotte\nLicensed under the MIT license.\n\nThis is a very bare-bones version of the file above\n*/\n\n/**\n * A wrapper over the ExponentialBackoffStrategy from the backoff module.\n */\nexport default class ExponentialBackoff extends EventEmitter {\n\t/**\n\t * Constructor.\n\t */\n\tconstructor() {\n\t\tsuper()\n\n\t\t/**\n\t\t * ExponentialBackoffStrategy instance.\n\t\t * @type {ExponentialBackoffStrategy}\n\t\t */\n\t\tthis._strategy = new ExponentialBackoffStrategy({\n\t\t\trandomisationFactor: 0.3,\n\t\t\tinitialDelay: 1000,\n\t\t\tmaxDelay: 60000\n\t\t})\n\n\t\t/**\n\t\t * Number of previous failed attempts.\n\t\t * @type {Number}\n\t\t */\n\t\tthis._backoffNumber = 0\n\n\t\t/**\n\t\t * Backoff timeout ID.\n\t\t * @type {TimeoutID}\n\t\t */\n\t\tthis._timeoutID = undefined\n\t}\n\n\t/**\n\t * Signals that we tried executing the protected routine and failed, or that we want to start the process.\n\t * @emits backoff(_backoffNumber, delay) delay is how much time will pass before we try executing the routine.\n\t */\n\tbackoff() {\n\t\t// Backoff already in progress\n\t\tif (this._timeoutID) {\n\t\t\treturn\n\t\t}\n\n\t\tconst delay = this._strategy.next()\n\t\tthis._timeoutID = setTimeout(() => {\n\t\t\tthis._timeoutID = undefined\n\t\t\tthis.emit('retry', this._backoffNumber)\n\t\t\tthis._backoffNumber++\n\t\t}, delay)\n\t\tthis.emit('backoff', this._backoffNumber, delay)\n\t}\n\n\t/**\n\t * Resets failed attempt number and cancels a possible pending action (routine execution after backoff).\n\t */\n\treset() {\n\t\t// Reset number of backoffs\n\t\tthis._backoffNumber = 0\n\n\t\t// Reset strategy\n\t\tthis._strategy.reset()\n\n\t\t// Clear a possibly running timeout\n\t\tif (this._timeoutID !== undefined) {\n\t\t\tclearTimeout(this._timeoutID)\n\t\t\tthis._timeoutID = undefined\n\t\t}\n\t}\n\n\t/**\n\t * Used to signal the routine was successful.\n\t * This resets the wrapper.\n\t * @emits success\n\t * @see {@link reset}\n\t */\n\tsuccess() {\n\t\t// Reset state\n\t\tthis.reset()\n\n\t\t// Alert everyone we did it (for now at least)\n\t\tthis.emit('success')\n\t}\n}\n",
+    "static": true,
+    "longname": "src/lib/backoff-wrapper.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 89,
+    "kind": "class",
+    "name": "ExponentialBackoff",
+    "memberof": "src/lib/backoff-wrapper.js",
+    "static": true,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/backoff-wrapper.js",
+    "importStyle": "ExponentialBackoff",
+    "description": "A wrapper over the ExponentialBackoffStrategy from the backoff module.",
+    "lineNumber": 18,
+    "interface": false,
+    "extends": [
+      "events~EventEmitter"
+    ]
+  },
+  {
+    "__docId__": 90,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#constructor",
+    "access": null,
+    "description": "Constructor.",
+    "lineNumber": 22,
+    "params": []
+  },
+  {
+    "__docId__": 91,
+    "kind": "member",
+    "name": "_strategy",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_strategy",
+    "access": null,
+    "description": "ExponentialBackoffStrategy instance.",
+    "lineNumber": 29,
+    "type": {
+      "nullable": null,
+      "types": [
+        "ExponentialBackoffStrategy"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 92,
+    "kind": "member",
+    "name": "_backoffNumber",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_backoffNumber",
+    "access": null,
+    "description": "Number of previous failed attempts.",
+    "lineNumber": 39,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 93,
+    "kind": "member",
+    "name": "_timeoutID",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_timeoutID",
+    "access": null,
+    "description": "Backoff timeout ID.",
+    "lineNumber": 45,
+    "type": {
+      "nullable": null,
+      "types": [
+        "TimeoutID"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 94,
+    "kind": "method",
+    "name": "backoff",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#backoff",
+    "access": null,
+    "description": "Signals that we tried executing the protected routine and failed, or that we want to start the process.",
+    "lineNumber": 52,
+    "params": [],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "backoff(_backoffNumber, delay) delay is how much time will pass before we try executing the routine."
+      }
+    ]
+  },
+  {
+    "__docId__": 95,
+    "kind": "member",
+    "name": "_timeoutID",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_timeoutID",
+    "access": null,
+    "description": null,
+    "lineNumber": 59,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 96,
+    "kind": "member",
+    "name": "_timeoutID",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_timeoutID",
+    "access": null,
+    "description": null,
+    "lineNumber": 60,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 97,
+    "kind": "method",
+    "name": "reset",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#reset",
+    "access": null,
+    "description": "Resets failed attempt number and cancels a possible pending action (routine execution after backoff).",
+    "lineNumber": 70,
+    "params": []
+  },
+  {
+    "__docId__": 98,
+    "kind": "member",
+    "name": "_backoffNumber",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_backoffNumber",
+    "access": null,
+    "description": null,
+    "lineNumber": 72,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 99,
+    "kind": "member",
+    "name": "_timeoutID",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#_timeoutID",
+    "access": null,
+    "description": null,
+    "lineNumber": 80,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 100,
+    "kind": "method",
+    "name": "success",
+    "memberof": "src/lib/backoff-wrapper.js~ExponentialBackoff",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/lib/backoff-wrapper.js~ExponentialBackoff#success",
+    "access": null,
+    "description": "Used to signal the routine was successful.\nThis resets the wrapper.",
+    "see": [
+      "{@link reset}"
+    ],
+    "lineNumber": 90,
+    "params": [],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "success"
+      }
+    ]
+  },
+  {
+    "__docId__": 101,
+    "kind": "file",
+    "name": "src/lib/db.js",
+    "content": "import url from 'url'\nimport PouchDB from 'pouchdb'\nimport normalizePath from './path'\n\n/**\n * Gets a local database.\n * @param {String} name The database name.\n * @returns {PouchDB} PouchDB instance referring to the requested database.\n */\nexport default function getDB(name) {\n\treturn new PouchDB(normalizePath(name))\n}\n\n/**\n * Gets a remote database.\n * When provided a URL with no port, the default CouchDB ports for HTTP and HTTPS will be added automatically.\n * @param {String} name The database name or URL.\n * @param {String} username The database username.\n * @param {String} password The database password.\n * @returns {PouchDB} PouchDB instance referring to the requested database.\n */\nexport function getRemoteDB(name, username, password) {\n\tlet dburl = name\n\n\tif (name.includes('//')) {\n\t\tconst urlObj = url.parse(name)\n\t\tconst port = urlObj.port || (urlObj.protocol === 'https:' ? 6984 : 5984)\n\t\tdburl = `${urlObj.protocol}//${urlObj.hostname}:${port}${urlObj.path}`\n\t}\n\n\treturn new PouchDB(dburl, {\n\t\tauth: {\n\t\t\tusername,\n\t\t\tpassword\n\t\t}\n\t})\n}\n",
+    "static": true,
+    "longname": "src/lib/db.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 102,
+    "kind": "function",
+    "name": "getDB",
+    "memberof": "src/lib/db.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/lib/db.js~getDB",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/db.js",
+    "importStyle": "getDB",
+    "description": "Gets a local database.",
+    "lineNumber": 10,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{PouchDB} PouchDB instance referring to the requested database."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "name",
+        "description": "The database name."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "PouchDB"
+      ],
+      "spread": false,
+      "description": "PouchDB instance referring to the requested database."
+    }
+  },
+  {
+    "__docId__": 103,
+    "kind": "function",
+    "name": "getRemoteDB",
+    "memberof": "src/lib/db.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/lib/db.js~getRemoteDB",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/db.js",
+    "importStyle": "{getRemoteDB}",
+    "description": "Gets a remote database.\nWhen provided a URL with no port, the default CouchDB ports for HTTP and HTTPS will be added automatically.",
+    "lineNumber": 22,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{PouchDB} PouchDB instance referring to the requested database."
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "name",
+        "description": "The database name or URL."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "username",
+        "description": "The database username."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "password",
+        "description": "The database password."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "PouchDB"
+      ],
+      "spread": false,
+      "description": "PouchDB instance referring to the requested database."
+    }
+  },
+  {
+    "__docId__": 104,
+    "kind": "file",
+    "name": "src/lib/log.js",
+    "content": "import bunyan from 'bunyan'\nimport normalizePath from './path'\n\n/**\n * Creates a configured bunyan logger.\n *\n * Our log output configuration:\n * - Everything goes to stdout\n * - debug-level or more severe messages go to a rotating file\n * - info-level or more severe messages go to the database\n *\n * When error-level or more severe messages are logged to the database,\n * they include an extra \"context\" property with the last 30 log messages\n * (of all levels).\n * @param {String} name Logger name.\n * @param {PouchDB} db Database where logs will be stored.\n * @returns {Bunyan}\n */\nexport default function createLogger(name, db) {\n\tconst bufferStream = new bunyan.RingBuffer({limit: 30})\n\tconst dbStream = {\n\t\twrite: obj => {\n\t\t\t// Error and fatal items include more information\n\t\t\tif (obj.level >= 40) {\n\t\t\t\t// Sometimes, the current object may already be in the bufferStream\n\t\t\t\t// To prevent a cyclic dependency, let's filter it out\n\t\t\t\tconst context = bufferStream.records.filter(record => record !== obj)\n\n\t\t\t\tobj.context = context\n\t\t\t}\n\n\t\t\t// Save to db\n\t\t\tdb.post(obj)\n\t\t}\n\t}\n\n\treturn bunyan.createLogger({\n\t\tname: `CanSatGS-${name}`,\n\t\tstreams: [\n\t\t\t{\n\t\t\t\tlevel: 'trace',\n\t\t\t\tstream: process.stdout\n\t\t\t},\n\t\t\t{\n\t\t\t\tlevel: 'debug',\n\t\t\t\ttype: 'rotating-file',\n\t\t\t\tpath: normalizePath(`CanSatGS-${name}.log`),\n\t\t\t\tperiod: '3h', // New log file at every 3h\n\t\t\t\tcount: 40 // Keep 40 log files\n\t\t\t},\n\t\t\t{\n\t\t\t\tlevel: 'info',\n\t\t\t\ttype: 'raw',\n\t\t\t\tstream: dbStream\n\t\t\t},\n\t\t\t{\n\t\t\t\tlevel: 'trace',\n\t\t\t\ttype: 'raw',\n\t\t\t\tstream: bufferStream\n\t\t\t}\n\t\t]\n\t})\n}\n",
+    "static": true,
+    "longname": "src/lib/log.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 105,
+    "kind": "function",
+    "name": "createLogger",
+    "memberof": "src/lib/log.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/lib/log.js~createLogger",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/log.js",
+    "importStyle": "createLogger",
+    "description": "Creates a configured bunyan logger.\n\nOur log output configuration:\n- Everything goes to stdout\n- debug-level or more severe messages go to a rotating file\n- info-level or more severe messages go to the database\n\nWhen error-level or more severe messages are logged to the database,\nthey include an extra \"context\" property with the last 30 log messages\n(of all levels).",
+    "lineNumber": 19,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Bunyan}"
+      }
+    ],
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "name",
+        "description": "Logger name."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "PouchDB"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "db",
+        "description": "Database where logs will be stored."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Bunyan"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 106,
+    "kind": "file",
+    "name": "src/lib/pass-event.js",
+    "content": "/**\n * Forwards an event from one EventEmitter to another.\n * @param {EventEmitter} sourceEmitter EventEmitter to be listened.\n * @param {EventEmitter} destEmitter EventEmitter to where the event will be forwarded.\n * @param {String} sourceEvent Event name to be listened to.\n * @param {String} [destEvent=sourceEvent] Event name in the source\n */\nexport default function passEvent(sourceEmitter, destEmitter, sourceEvent, destEvent = sourceEvent) {\n\tsourceEmitter.on(sourceEvent, (...args) => destEmitter.emit(destEvent, ...args))\n}\n",
+    "static": true,
+    "longname": "src/lib/pass-event.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 107,
+    "kind": "function",
+    "name": "passEvent",
+    "memberof": "src/lib/pass-event.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/lib/pass-event.js~passEvent",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/pass-event.js",
+    "importStyle": "passEvent",
+    "description": "Forwards an event from one EventEmitter to another.",
+    "lineNumber": 8,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "EventEmitter"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "sourceEmitter",
+        "description": "EventEmitter to be listened."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "EventEmitter"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "destEmitter",
+        "description": "EventEmitter to where the event will be forwarded."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "sourceEvent",
+        "description": "Event name to be listened to."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "sourceEvent",
+        "defaultRaw": "sourceEvent",
+        "name": "destEvent",
+        "description": "Event name in the source"
+      }
+    ]
+  },
+  {
+    "__docId__": 108,
+    "kind": "file",
+    "name": "src/lib/path.js",
+    "content": "import {join} from 'path'\n\n/**\n * A prefix for capture-lib files (DBs, logs).\n * Can be overriden via `global.pathPrefix` or `global.dbNamePrefix` (Deprecated).\n * It is used to store capture-lib files (like databases and logs)\n * in a specific directory that is not necessarily the current working directory.\n * @type {String}\n */\nconst pathPrefix = global.pathPrefix || global.dbNamePrefix || ''\n\nexport default function normalizePath(...path) {\n\treturn join(pathPrefix, ...path)\n}\n",
+    "static": true,
+    "longname": "src/lib/path.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 109,
+    "kind": "variable",
+    "name": "pathPrefix",
+    "memberof": "src/lib/path.js",
+    "static": true,
+    "longname": "src/lib/path.js~pathPrefix",
+    "access": null,
+    "export": false,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/path.js",
+    "importStyle": null,
+    "description": "A prefix for capture-lib files (DBs, logs).\nCan be overriden via `global.pathPrefix` or `global.dbNamePrefix` (Deprecated).\nIt is used to store capture-lib files (like databases and logs)\nin a specific directory that is not necessarily the current working directory.",
+    "lineNumber": 10,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 110,
+    "kind": "function",
+    "name": "normalizePath",
+    "memberof": "src/lib/path.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/lib/path.js~normalizePath",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/lib/path.js",
+    "importStyle": "normalizePath",
+    "description": null,
+    "lineNumber": 12,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "path",
+        "types": [
+          "...*"
+        ],
+        "spread": true
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 111,
+    "kind": "file",
+    "name": "src/parser.js",
+    "content": "import {crc32} from 'crc'\nimport {set as objPathSet} from 'object-path'\n\n/**\n * Parser creation helper class. Any subclasses should reimplement the parse method,\n * calling super.parse in the beginning. You have useful methods for reading regular C\n * datatypes from the buffer: readInt, readFloat, readChar... To use it in node-serialport\n * or the serial wrapper just pass in ::Parser.parse\n * Keep in mind not initialize this class as is. RE-IMPLEMENT Parser.parse!\n */\nexport default class Parser {\n\t/**\n\t * @param {String} [endianess='LE'] Set byte-order to big endian (BE) or little endian (LE).\n\t */\n\tconstructor(endianess = 'LE') {\n\t\t/**\n\t\t * Current packet being parsed.\n\t\t * @type {!Object}\n\t\t * @protected\n\t\t */\n\t\tthis._raw = undefined\n\n\t\t/**\n\t\t * Current position in the packet being parsed.\n\t\t * @type {Number}\n\t\t * @protected\n\t\t */\n\t\tthis._i = 0\n\n\t\t/**\n\t\t * Parsed output container.\n\t\t * @type {Object}\n\t\t * @property {String} crc.sent The CRC32 checkum sent along with the packet.\n\t\t * @property {String} crc.local The CRC32 checksum calculated from the sent data.\n\t\t */\n\t\tthis.packet = Object.create(null)\n\n\t\t/**\n\t\t * Raw packet byte endianess (Little Endian (LE) for the Arduino).\n\t\t * Acceptable values: LE, BE.\n\t\t * @type {String}\n\t\t */\n\t\tthis.endianess = endianess\n\t}\n\n\t/**\n\t * Parses a packet. Default implementation resets state and calculates and extracts the CRC32\n\t * checksum before parsing the new packet.\n\t * That's why, if you want any parsing at all to be performed, YOU MUST RE-IMPLEMENT THIS METHOD.\n\t * Preferrably calling this implementation before any parsing(but after any decoding\n\t * *wink* *wink* quasi-binary decoder).\n\t * @param {Buffer} rawPacket The packet to be parsed.\n\t * @return {Object} The parsed object.\n\t */\n\tparse(rawPacket) {\n\t\t// Change the current packet\n\t\tthis._raw = rawPacket\n\n\t\t// Reset state thingies\n\t\tthis._i = 0\n\t\tthis.packet = Object.create(null)\n\n\t\t// Calculate CRC\n\t\tif (this._raw.length > 4) {\n\t\t\tthis.setValue('crc.sent', rawPacket[`readUInt${this.endianess}`](rawPacket.length - 4, 4).toString(16))\n\t\t\tthis.setValue('crc.local', crc32(rawPacket.slice(0, rawPacket.length - 4)).toString(16))\n\t\t}\n\n\t\t// More parsing reserved to subclass\n\t\treturn this.packet // Just to behave as the Docs say it will\n\t}\n\n\t/**\n\t * The value setter called by read* helper functions.\n\t * Uses object path dot notation in the key and can convert values in one line.\n\t * @param {String} key The object path where the value will be inserted.\n\t * @param {mixed} val Anything you want to put.\n\t * @param {Function} [converter=identity] A function that converts the value.\n\t * @return {mixed} The provided value (val).\n\t */\n\tsetValue(key, val, converter = v => v) {\n\t\t// Set the value in this.packet.[key]\n\t\tobjPathSet(this.packet, key, converter(val))\n\t\treturn val\n\t}\n\n\t/**\n\t * Reads a signed integer of 1-6 bytes.\n\t * @param {String} key The dot notation path where the int goes to.\n\t * @param {Number} [size=1] The size in bytes of the integer (1 to 6 bytes only).\n\t * @param {Function} [converter=identity] A function that converts the value.\n\t * @return {Number} The read integer.\n\t */\n\treadInt(key, size = 1, converter) {\n\t\t// Get the value and update the index\n\t\tconst val = this._raw[`readInt${this.endianess}`](this._i, size)\n\t\tthis._i += size\n\n\t\treturn this.setValue(key, val, converter)\n\t}\n\n\t/**\n\t * Reads an unsigned integer of 1-6 bytes.\n\t * @param {String} key The dot notation path where the int goes to.\n\t * @param {Number} [size=1] The size in bytes of the integer (1 to 6 bytes only).\n\t * @param {Function} [converter=identity] A function that converts the value.\n\t * @return {Number} The read integer.\n\t */\n\treadUInt(key, size = 1, converter) {\n\t\t// Get the value and update the index\n\t\tconst val = this._raw[`readUInt${this.endianess}`](this._i, size)\n\t\tthis._i += size\n\n\t\treturn this.setValue(key, val, converter)\n\t}\n\n\t/**\n\t * Reads a 32-bit float.\n\t * @param {String} key The dot notation path where the float goes to.\n\t * @param {Function} [converter=identity] A function that converts the value.\n\t * @return {Number} The read float.\n\t */\n\treadFloat(key, converter) {\n\t\t// Get the value and update the index\n\t\tconst val = this._raw[`readFloat${this.endianess}`](this._i)\n\t\tthis._i += 4\n\n\t\treturn this.setValue(key, val, converter)\n\t}\n\n\t/**\n\t * Reads a char.\n\t * @param {String} key The dot notation path where the char goes to.\n\t * @param {Function} [converter=identity] A function that converts the value.\n\t * @return {String} The read char.\n\t */\n\treadChar(key, converter) {\n\t\treturn this.setValue(key, String.fromCharCode(this._raw[this._i++]), converter)\n\t}\n\n\t/**\n\t * Reads a boolean.\n\t * @param {String} key The dot notation path where the boolean goes to.\n\t * @param {Function} [converter=identity] A function that converts the value.\n\t * @return {Boolean} The read boolean.\n\t */\n\treadBoolean(key, converter) {\n\t\treturn this.setValue(key, Boolean(this._raw[this._i++]), converter)\n\t}\n}\n",
+    "static": true,
+    "longname": "src/parser.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 112,
+    "kind": "class",
+    "name": "Parser",
+    "memberof": "src/parser.js",
+    "static": true,
+    "longname": "src/parser.js~Parser",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/parser.js",
+    "importStyle": "Parser",
+    "description": "Parser creation helper class. Any subclasses should reimplement the parse method,\ncalling super.parse in the beginning. You have useful methods for reading regular C\ndatatypes from the buffer: readInt, readFloat, readChar... To use it in node-serialport\nor the serial wrapper just pass in ::Parser.parse\nKeep in mind not initialize this class as is. RE-IMPLEMENT Parser.parse!",
+    "lineNumber": 11,
+    "interface": false
+  },
+  {
+    "__docId__": 113,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#constructor",
+    "access": null,
+    "description": "",
+    "lineNumber": 15,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "'LE'",
+        "defaultRaw": "'LE'",
+        "name": "endianess",
+        "description": "Set byte-order to big endian (BE) or little endian (LE)."
+      }
+    ]
+  },
+  {
+    "__docId__": 114,
+    "kind": "member",
+    "name": "_raw",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_raw",
+    "access": "protected",
+    "description": "Current packet being parsed.",
+    "lineNumber": 21,
+    "type": {
+      "nullable": false,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 115,
+    "kind": "member",
+    "name": "_i",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_i",
+    "access": "protected",
+    "description": "Current position in the packet being parsed.",
+    "lineNumber": 28,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 116,
+    "kind": "member",
+    "name": "packet",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#packet",
+    "access": null,
+    "description": "Parsed output container.",
+    "lineNumber": 36,
+    "properties": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "crc.sent",
+        "description": "The CRC32 checkum sent along with the packet."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "crc.local",
+        "description": "The CRC32 checksum calculated from the sent data."
+      }
+    ],
+    "type": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 117,
+    "kind": "member",
+    "name": "endianess",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#endianess",
+    "access": null,
+    "description": "Raw packet byte endianess (Little Endian (LE) for the Arduino).\nAcceptable values: LE, BE.",
+    "lineNumber": 43,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 118,
+    "kind": "method",
+    "name": "parse",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#parse",
+    "access": null,
+    "description": "Parses a packet. Default implementation resets state and calculates and extracts the CRC32\nchecksum before parsing the new packet.\nThat's why, if you want any parsing at all to be performed, YOU MUST RE-IMPLEMENT THIS METHOD.\nPreferrably calling this implementation before any parsing(but after any decoding\n*wink* *wink* quasi-binary decoder).",
+    "lineNumber": 55,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Buffer"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "rawPacket",
+        "description": "The packet to be parsed."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": "The parsed object."
+    }
+  },
+  {
+    "__docId__": 119,
+    "kind": "member",
+    "name": "_raw",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_raw",
+    "access": null,
+    "description": null,
+    "lineNumber": 57,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 120,
+    "kind": "member",
+    "name": "_i",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_i",
+    "access": null,
+    "description": null,
+    "lineNumber": 60,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 121,
+    "kind": "member",
+    "name": "packet",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#packet",
+    "access": null,
+    "description": null,
+    "lineNumber": 61,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 122,
+    "kind": "method",
+    "name": "setValue",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#setValue",
+    "access": null,
+    "description": "The value setter called by read* helper functions.\nUses object path dot notation in the key and can convert values in one line.",
+    "lineNumber": 81,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": "The object path where the value will be inserted."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "mixed"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "val",
+        "description": "Anything you want to put."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "identity",
+        "defaultRaw": "identity",
+        "name": "converter",
+        "description": "A function that converts the value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "mixed"
+      ],
+      "spread": false,
+      "description": "The provided value (val)."
+    }
+  },
+  {
+    "__docId__": 123,
+    "kind": "method",
+    "name": "readInt",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#readInt",
+    "access": null,
+    "description": "Reads a signed integer of 1-6 bytes.",
+    "lineNumber": 94,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": "The dot notation path where the int goes to."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "1",
+        "defaultRaw": 1,
+        "name": "size",
+        "description": "The size in bytes of the integer (1 to 6 bytes only)."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "identity",
+        "defaultRaw": "identity",
+        "name": "converter",
+        "description": "A function that converts the value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "The read integer."
+    }
+  },
+  {
+    "__docId__": 124,
+    "kind": "member",
+    "name": "_i",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_i",
+    "access": null,
+    "description": null,
+    "lineNumber": 97,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 125,
+    "kind": "method",
+    "name": "readUInt",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#readUInt",
+    "access": null,
+    "description": "Reads an unsigned integer of 1-6 bytes.",
+    "lineNumber": 109,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": "The dot notation path where the int goes to."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "1",
+        "defaultRaw": 1,
+        "name": "size",
+        "description": "The size in bytes of the integer (1 to 6 bytes only)."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "identity",
+        "defaultRaw": "identity",
+        "name": "converter",
+        "description": "A function that converts the value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "The read integer."
+    }
+  },
+  {
+    "__docId__": 126,
+    "kind": "member",
+    "name": "_i",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_i",
+    "access": null,
+    "description": null,
+    "lineNumber": 112,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 127,
+    "kind": "method",
+    "name": "readFloat",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#readFloat",
+    "access": null,
+    "description": "Reads a 32-bit float.",
+    "lineNumber": 123,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": "The dot notation path where the float goes to."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "identity",
+        "defaultRaw": "identity",
+        "name": "converter",
+        "description": "A function that converts the value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": "The read float."
+    }
+  },
+  {
+    "__docId__": 128,
+    "kind": "member",
+    "name": "_i",
+    "memberof": "src/parser.js~Parser",
+    "static": false,
+    "longname": "src/parser.js~Parser#_i",
+    "access": null,
+    "description": null,
+    "lineNumber": 126,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 129,
+    "kind": "method",
+    "name": "readChar",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#readChar",
+    "access": null,
+    "description": "Reads a char.",
+    "lineNumber": 137,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": "The dot notation path where the char goes to."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "identity",
+        "defaultRaw": "identity",
+        "name": "converter",
+        "description": "A function that converts the value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": "The read char."
+    }
+  },
+  {
+    "__docId__": 130,
+    "kind": "method",
+    "name": "readBoolean",
+    "memberof": "src/parser.js~Parser",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/parser.js~Parser#readBoolean",
+    "access": null,
+    "description": "Reads a boolean.",
+    "lineNumber": 147,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": "The dot notation path where the boolean goes to."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "identity",
+        "defaultRaw": "identity",
+        "name": "converter",
+        "description": "A function that converts the value."
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Boolean"
+      ],
+      "spread": false,
+      "description": "The read boolean."
+    }
+  },
+  {
+    "__docId__": 131,
+    "kind": "file",
+    "name": "src/serial.js",
+    "content": "import {EventEmitter} from 'events'\nimport SerialPort from 'serialport'\n\n/**\n * A node-serialport wrapper that keeps track of port state and allows from on-the-fly\n * port path/name changes (automatically attaches/detaches event listeners and keeps config).\n */\nexport default class Serial extends EventEmitter {\n\t/**\n\t * Constructor: the place for setting the baud rate and parser.\n\t * @param {Function} [parser=raw] A node-serialport parser.\n\t * @param {Number} [baud=19200] Desired baud rate.\n\t */\n\tconstructor(logger, parser, baud = 19200) {\n\t\tsuper()\n\n\t\t/**\n\t\t * Holds the current node-serialport instance.\n\t\t * @type {!SerialPort}\n\t\t */\n\t\tthis._port = undefined\n\n\t\t/**\n\t\t * Holds the desired serial baud rate.\n\t\t * @type {Number}\n\t\t */\n\t\tthis._baud = baud\n\n\t\t/**\n\t\t * Holds the parsing function.\n\t\t * @type {!Function}\n\t\t */\n\t\tthis._parser = parser\n\n\t\t/**\n\t\t * Holds the current port path.\n\t\t * @type {!String}\n\t\t */\n\t\tthis._path = undefined\n\n\t\t/**\n\t\t * Holds current state. Possible values: disconnect, open, close, disconnect_force.\n\t\t * @type {String}\n\t\t */\n\t\tthis._state = 'close'\n\n\t\t/**\n\t\t * Logger instance. (Bunyan API).\n\t\t * @type Object\n\t\t */\n\t\tthis._log = logger\n\t}\n\n\t/**\n\t * Sets a new path to all future serialport instances. If a port is already open,\n\t * it is automatically closed and a new one is opened with the new path (keeps event listeners).\n\t * @emits data(packet): New data arrived (after being parsed by Serial#_parser).\n\t * @emits stateChange(state): Serial#_state has changed.\n\t * @emits error(error): An error ocurred in node-serialport.\n\t * @return {Promise} When path is changed and the port recreated/reopened.\n\t */\n\tsetPath(path) {\n\t\tthis._log.debug('serial.setPath')\n\t\t// Guard for already changed port...\n\t\tif (path === this._path) {\n\t\t\tthis._log.trace('serial._path needs no change', path)\n\t\t\treturn Promise.resolve()\n\t\t}\n\n\t\treturn (new Promise(resolve => {\n\t\t\t// Any _port recreation will open this new path\n\t\t\tthis._log.trace('serial._path changed to', path)\n\t\t\tthis._path = path\n\n\t\t\t// Destroy and recreate _port when necessary\n\t\t\tif (this._port) {\n\t\t\t\tthis._log.trace('serial._path changed: recreating existing port')\n\t\t\t\tconst open = this._port.isOpen()\n\t\t\t\tthis._destroyPort()\n\t\t\t\t\t.then(() => open ? this.open() : this._createPort())\n\t\t\t\t\t.then(resolve)\n\t\t\t} else {\n\t\t\t\tresolve()\n\t\t\t}\n\t\t}))\n\t\t\t.then(() => this.emit('pathChange', path))\n\t}\n\n\t/**\n\t * Opens the serialport, creating it if needed.\n\t * @emits data(packet): New data arrived (after being parsed by Serial#_parser).\n\t * @emits stateChange(state): Serial#_state has changed.\n\t * @emits error(error): An error ocurred in node-serialport.\n\t * @return {Promise} Resolved when the serial port is open.\n\t */\n\topen() {\n\t\tthis._log.debug('serial.open')\n\t\treturn new Promise(resolve => {\n\t\t\t// No port? Create it!\n\t\t\tif (!this._port) {\n\t\t\t\tthis._log.trace('port does not exist')\n\t\t\t\treturn this._createPort()\n\t\t\t\t\t.then(() => this.open())\n\t\t\t\t\t.then(resolve)\n\t\t\t}\n\n\t\t\t// Already open = nothing to do\n\t\t\tif (this._port.isOpen()) {\n\t\t\t\tthis._log.trace('port already open')\n\t\t\t\treturn resolve()\n\t\t\t}\n\n\t\t\t// Open the port\n\t\t\tthis._log.trace('calling serial._port.open')\n\t\t\tthis._port.open(resolve)\n\t\t})\n\t}\n\n\t/**\n\t * Closes the serialport.\n\t * @emits stateChange(state): Serial#_state} has changed.\n\t * @emits error(error): An error ocurred in node-serialport.\n\t * @return {Promise} Resolved when the serialport is closed.\n\t */\n\tclose() {\n\t\tthis._log.debug('serial.close')\n\t\t// Already closed/no port = nothing to do\n\t\tif (!this._port || !this._port.isOpen()) {\n\t\t\tthis._log.trace('port already closed/does not exist')\n\t\t\treturn Promise.resolve()\n\t\t}\n\n\t\tthis._log.trace('calling serial._port.close')\n\t\treturn new Promise(resolve => this._port.close(resolve))\n\t}\n\n\t/**\n\t * Destroys the current serialport instance. Removing all listeners and closing it beforehand.\n\t * @protected\n\t * @emits stateChange(state): Serial#_state has changed.\n\t * @returns {Promise} Resolves when all is done.\n\t */\n\t_destroyPort() {\n\t\tthis._log.debug('serial._destroyPort')\n\t\tif (!this._port) {\n\t\t\treturn Promise.resolve()\n\t\t}\n\n\t\treturn new Promise(resolve => {\n\t\t\tthis._port.removeAllListeners()\n\n\t\t\t// Only close if necessary\n\t\t\tif (!this._port.isOpen()) {\n\t\t\t\tthis._log.trace('port not open, removing it')\n\t\t\t\tthis._port = undefined\n\t\t\t\treturn resolve()\n\t\t\t}\n\n\t\t\tthis._log.trace('port open, closing')\n\t\t\tthis._port.close(error => {\n\t\t\t\tif (error) {\n\t\t\t\t\tthis._log.error('Error closing port!', error)\n\t\t\t\t}\n\n\t\t\t\t// Must keep going\n\t\t\t\tthis._port = undefined\n\t\t\t\tresolve()\n\t\t\t})\n\t\t})\n\t}\n\n\t/**\n\t * Creates the serialport instance and attaches all relevant event listeners\n\t * that forward data and errors and keep track of state.\n\t * @protected\n\t * @emits data(packet): New data arrived (after being parsed by Serial#_parser).\n\t * @emits stateChange(state): Serial#_state has changed.\n\t * @emits error(error): An error ocurred in node-serialport.\n\t * @return {Promise} A resolved Promise for easy chaining in {@link Serial#setPath}.\n\t */\n\t_createPort() {\n\t\t// Only create if it does not exist\n\t\tif (this._port) {\n\t\t\treturn Promise.resolve()\n\t\t}\n\n\t\t// Create serialport instance\n\t\tthis._port = new SerialPort(this._path, {\n\t\t\tbaudRate: this._baud,\n\t\t\tparser: this._parser,\n\t\t\tautoOpen: false\n\t\t})\n\n\t\t// Register event listeners\n\t\tthis._port.on('data', data => this.emit('data', data))\n\t\tthis._port.on('error', error => {\n\t\t\tthis._log.fatal(error)\n\t\t\tthis.emit('error', error)\n\t\t})\n\n\t\t// State tracking\n\t\tthis._port.on('open', () => this._updateState('open'))\n\t\tthis._port.on('disconnect', () => this._updateState('disconnect_force'))\n\t\tthis._port.on('close', () => {\n\t\t\t// Detect safe disconnections\n\t\t\tif (this._state === 'disconnect_force') {\n\t\t\t\treturn this._updateState('disconnect')\n\t\t\t}\n\t\t\tthis._updateState('close')\n\t\t})\n\n\t\treturn Promise.resolve()\n\t}\n\n\t/**\n\t * Shortcut for updating state that changes this._state and emits\n\t * a stateChange event with one call.\n\t * @protected\n\t * @param {String} state New state.\n\t * @emits stateChange(state): Serial#_state has changed.\n\t */\n\t_updateState(state) {\n\t\tthis._state = state\n\t\tthis.emit('stateChange', state)\n\t}\n}\n\n/**\n * Lists available ports in the system with SerialPort.list.\n * Tries to fill out vendorId and productId fields in Windows from pnpId.\n * @return {Promise<Array>} Array of port information objects.\n */\nexport function listPorts() {\n\treturn new Promise(resolve => {\n\t\tSerialPort.list((err, ports) => {\n\t\t\tif (err) {\n\t\t\t\t// TODO: reject promise with error, deal with it in Station#getAvailablePorts\n\t\t\t\treturn resolve([])\n\t\t\t}\n\n\t\t\t// Fill out some missing fields if possible\n\t\t\tports = ports.map(port => {\n\t\t\t\tif ((!port.vendorId || !port.productId) && port.pnpId) {\n\t\t\t\t\tport.vendorId = '0x' + /VID_([0-9,A-Z]*)&/.exec(port.pnpId)[1].toLowerCase()\n\t\t\t\t\tport.productId = '0x' + /PID_([0-9,A-Z]*)&/.exec(port.pnpId)[1].toLowerCase()\n\t\t\t\t}\n\n\t\t\t\treturn port\n\t\t\t})\n\n\t\t\tresolve(ports)\n\t\t})\n\t})\n}\n",
+    "static": true,
+    "longname": "src/serial.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 132,
+    "kind": "class",
+    "name": "Serial",
+    "memberof": "src/serial.js",
+    "static": true,
+    "longname": "src/serial.js~Serial",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/serial.js",
+    "importStyle": "Serial",
+    "description": "A node-serialport wrapper that keeps track of port state and allows from on-the-fly\nport path/name changes (automatically attaches/detaches event listeners and keeps config).",
+    "lineNumber": 8,
+    "interface": false,
+    "extends": [
+      "events~EventEmitter"
+    ]
+  },
+  {
+    "__docId__": 133,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#constructor",
+    "access": null,
+    "description": "Constructor: the place for setting the baud rate and parser.",
+    "lineNumber": 14,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "raw",
+        "defaultRaw": "raw",
+        "name": "parser",
+        "description": "A node-serialport parser."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "19200",
+        "defaultRaw": 19200,
+        "name": "baud",
+        "description": "Desired baud rate."
+      }
+    ]
+  },
+  {
+    "__docId__": 134,
+    "kind": "member",
+    "name": "_port",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_port",
+    "access": null,
+    "description": "Holds the current node-serialport instance.",
+    "lineNumber": 21,
+    "type": {
+      "nullable": false,
+      "types": [
+        "SerialPort"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 135,
+    "kind": "member",
+    "name": "_baud",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_baud",
+    "access": null,
+    "description": "Holds the desired serial baud rate.",
+    "lineNumber": 27,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 136,
+    "kind": "member",
+    "name": "_parser",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_parser",
+    "access": null,
+    "description": "Holds the parsing function.",
+    "lineNumber": 33,
+    "type": {
+      "nullable": false,
+      "types": [
+        "Function"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 137,
+    "kind": "member",
+    "name": "_path",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_path",
+    "access": null,
+    "description": "Holds the current port path.",
+    "lineNumber": 39,
+    "type": {
+      "nullable": false,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 138,
+    "kind": "member",
+    "name": "_state",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_state",
+    "access": null,
+    "description": "Holds current state. Possible values: disconnect, open, close, disconnect_force.",
+    "lineNumber": 45,
+    "type": {
+      "nullable": null,
+      "types": [
+        "String"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 139,
+    "kind": "member",
+    "name": "_log",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_log",
+    "access": null,
+    "description": "Logger instance. (Bunyan API).",
+    "lineNumber": 51,
+    "type": {
+      "nullable": null,
+      "types": [
+        "*"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 140,
+    "kind": "method",
+    "name": "setPath",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#setPath",
+    "access": null,
+    "description": "Sets a new path to all future serialport instances. If a port is already open,\nit is automatically closed and a new one is opened with the new path (keeps event listeners).",
+    "lineNumber": 62,
+    "params": [
+      {
+        "name": "path",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "When path is changed and the port recreated/reopened."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "data(packet): New data arrived (after being parsed by Serial#_parser)."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stateChange(state): Serial#_state has changed."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "error(error): An error ocurred in node-serialport."
+      }
+    ]
+  },
+  {
+    "__docId__": 141,
+    "kind": "member",
+    "name": "_path",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_path",
+    "access": null,
+    "description": null,
+    "lineNumber": 73,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 142,
+    "kind": "method",
+    "name": "open",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#open",
+    "access": null,
+    "description": "Opens the serialport, creating it if needed.",
+    "lineNumber": 96,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "Resolved when the serial port is open."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "data(packet): New data arrived (after being parsed by Serial#_parser)."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stateChange(state): Serial#_state has changed."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "error(error): An error ocurred in node-serialport."
+      }
+    ]
+  },
+  {
+    "__docId__": 143,
+    "kind": "method",
+    "name": "close",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#close",
+    "access": null,
+    "description": "Closes the serialport.",
+    "lineNumber": 125,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "Resolved when the serialport is closed."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stateChange(state): Serial#_state} has changed."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "error(error): An error ocurred in node-serialport."
+      }
+    ]
+  },
+  {
+    "__docId__": 144,
+    "kind": "method",
+    "name": "_destroyPort",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#_destroyPort",
+    "access": "protected",
+    "description": "Destroys the current serialport instance. Removing all listeners and closing it beforehand.",
+    "lineNumber": 143,
+    "unknown": [
+      {
+        "tagName": "@returns",
+        "tagValue": "{Promise} Resolves when all is done."
+      }
+    ],
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "Resolves when all is done."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stateChange(state): Serial#_state has changed."
+      }
+    ]
+  },
+  {
+    "__docId__": 145,
+    "kind": "member",
+    "name": "_port",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_port",
+    "access": null,
+    "description": null,
+    "lineNumber": 155,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 146,
+    "kind": "member",
+    "name": "_port",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_port",
+    "access": null,
+    "description": null,
+    "lineNumber": 166,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 147,
+    "kind": "method",
+    "name": "_createPort",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#_createPort",
+    "access": "protected",
+    "description": "Creates the serialport instance and attaches all relevant event listeners\nthat forward data and errors and keep track of state.",
+    "lineNumber": 181,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": "A resolved Promise for easy chaining in {@link Serial#setPath}."
+    },
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "data(packet): New data arrived (after being parsed by Serial#_parser)."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stateChange(state): Serial#_state has changed."
+      },
+      {
+        "types": [
+          "*"
+        ],
+        "description": "error(error): An error ocurred in node-serialport."
+      }
+    ]
+  },
+  {
+    "__docId__": 148,
+    "kind": "member",
+    "name": "_port",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_port",
+    "access": null,
+    "description": null,
+    "lineNumber": 188,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 149,
+    "kind": "method",
+    "name": "_updateState",
+    "memberof": "src/serial.js~Serial",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/serial.js~Serial#_updateState",
+    "access": "protected",
+    "description": "Shortcut for updating state that changes this._state and emits\na stateChange event with one call.",
+    "lineNumber": 222,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "String"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "state",
+        "description": "New state."
+      }
+    ],
+    "emits": [
+      {
+        "types": [
+          "*"
+        ],
+        "description": "stateChange(state): Serial#_state has changed."
+      }
+    ]
+  },
+  {
+    "__docId__": 150,
+    "kind": "member",
+    "name": "_state",
+    "memberof": "src/serial.js~Serial",
+    "static": false,
+    "longname": "src/serial.js~Serial#_state",
+    "access": null,
+    "description": null,
+    "lineNumber": 223,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 151,
+    "kind": "function",
+    "name": "listPorts",
+    "memberof": "src/serial.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/serial.js~listPorts",
+    "access": null,
+    "export": true,
+    "importPath": "@cansat-icarus/capture-lib/src/serial.js",
+    "importStyle": "{listPorts}",
+    "description": "Lists available ports in the system with SerialPort.list.\nTries to fill out vendorId and productId fields in Windows from pnpId.",
+    "lineNumber": 233,
+    "params": [],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise<Array>"
+      ],
+      "spread": false,
+      "description": "Array of port information objects."
+    }
+  },
+  {
+    "__docId__": 153,
+    "kind": "external",
+    "name": "Infinity",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Infinity",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 154,
+    "kind": "external",
+    "name": "NaN",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~NaN",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 155,
+    "kind": "external",
+    "name": "undefined",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~undefined",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 156,
+    "kind": "external",
+    "name": "null",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~null",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 157,
+    "kind": "external",
+    "name": "Object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 158,
+    "kind": "external",
+    "name": "object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 159,
+    "kind": "external",
+    "name": "Function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 160,
+    "kind": "external",
+    "name": "function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 161,
+    "kind": "external",
+    "name": "Boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 162,
+    "kind": "external",
+    "name": "boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 163,
+    "kind": "external",
+    "name": "Symbol",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Symbol",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 164,
+    "kind": "external",
+    "name": "Error",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Error",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 165,
+    "kind": "external",
+    "name": "EvalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~EvalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 166,
+    "kind": "external",
+    "name": "InternalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~InternalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 167,
+    "kind": "external",
+    "name": "RangeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RangeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 168,
+    "kind": "external",
+    "name": "ReferenceError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ReferenceError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 169,
+    "kind": "external",
+    "name": "SyntaxError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~SyntaxError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 170,
+    "kind": "external",
+    "name": "TypeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~TypeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 171,
+    "kind": "external",
+    "name": "URIError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~URIError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 172,
+    "kind": "external",
+    "name": "Number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 173,
+    "kind": "external",
+    "name": "number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 174,
+    "kind": "external",
+    "name": "Date",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Date",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 175,
+    "kind": "external",
+    "name": "String",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~String",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 176,
+    "kind": "external",
+    "name": "string",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~string",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 177,
+    "kind": "external",
+    "name": "RegExp",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RegExp",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 178,
+    "kind": "external",
+    "name": "Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 179,
+    "kind": "external",
+    "name": "Int8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 180,
+    "kind": "external",
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 181,
+    "kind": "external",
+    "name": "Uint8ClampedArray",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8ClampedArray",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 182,
+    "kind": "external",
+    "name": "Int16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 183,
+    "kind": "external",
+    "name": "Uint16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 184,
+    "kind": "external",
+    "name": "Int32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 185,
+    "kind": "external",
+    "name": "Uint32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 186,
+    "kind": "external",
+    "name": "Float32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 187,
+    "kind": "external",
+    "name": "Float64Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float64Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 188,
+    "kind": "external",
+    "name": "Map",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Map",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 189,
+    "kind": "external",
+    "name": "Set",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Set",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 190,
+    "kind": "external",
+    "name": "WeakMap",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakMap",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 191,
+    "kind": "external",
+    "name": "WeakSet",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakSet",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 192,
+    "kind": "external",
+    "name": "ArrayBuffer",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ArrayBuffer",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 193,
+    "kind": "external",
+    "name": "DataView",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~DataView",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 194,
+    "kind": "external",
+    "name": "JSON",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~JSON",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 195,
+    "kind": "external",
+    "name": "Promise",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Promise",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 196,
+    "kind": "external",
+    "name": "Generator",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Generator",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 197,
+    "kind": "external",
+    "name": "GeneratorFunction",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~GeneratorFunction",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 198,
+    "kind": "external",
+    "name": "Reflect",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Reflect",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 199,
+    "kind": "external",
+    "name": "Proxy",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Proxy",
+    "access": null,
+    "description": "",
+    "lineNumber": 193,
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 201,
+    "kind": "external",
+    "name": "CanvasRenderingContext2D",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~CanvasRenderingContext2D",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 202,
+    "kind": "external",
+    "name": "DocumentFragment",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~DocumentFragment",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 203,
+    "kind": "external",
+    "name": "Element",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Element",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 204,
+    "kind": "external",
+    "name": "Event",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Event",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 205,
+    "kind": "external",
+    "name": "Node",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Node",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 206,
+    "kind": "external",
+    "name": "NodeList",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~NodeList",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 207,
+    "kind": "external",
+    "name": "XMLHttpRequest",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~XMLHttpRequest",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 208,
+    "kind": "external",
+    "name": "AudioContext",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~AudioContext",
+    "access": null,
+    "description": "",
+    "lineNumber": 34,
+    "builtinExternal": true
+  }
+]

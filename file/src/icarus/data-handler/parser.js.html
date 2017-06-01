@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../../">
+  <title data-ice="title">src/icarus/data-handler/parser.js | CanSat Groundstation Library API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/cansat-icarus/capture-lib.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/serial.js~Serial.html">Serial</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-listPorts">listPorts</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/station.js~Station.html">Station</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tMinusPid">tMinusPid</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tMinusVid">tMinusVid</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/backend</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/backend/index.js~Backend.html">Backend</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/backend/replicator.js~Replicator.html">Replicator</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/classifier</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/classifier/index.js~Classifier.html">Classifier</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-minmaxH">minmaxH</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-variationH">variationH</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/data-handler</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/data-handler/parser.js~IcarusParser.html">IcarusParser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-dataHandler">dataHandler</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parser">parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-DS18B20">DS18B20</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-LIS331HH_24G">LIS331HH_24G</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-MMA7361_6G">MMA7361_6G</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-MPX4115A">MPX4115A</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-analogToMV">analogToMV</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getBit">getBit</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsAltitude">gpsAltitude</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsCoordinate">gpsCoordinate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsCourse">gpsCourse</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsFlags">gpsFlags</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsSpeed">gpsSpeed</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-messages">messages</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-moduleNames">moduleNames</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tmBuffer">tmBuffer</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">lib</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/lib/backoff-wrapper.js~ExponentialBackoff.html">ExponentialBackoff</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getDB">getDB</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getRemoteDB">getRemoteDB</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-createLogger">createLogger</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-passEvent">passEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-normalizePath">normalizePath</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-pathPrefix">pathPrefix</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/icarus/data-handler/parser.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import Parser from &apos;../../parser&apos;
+import * as conv from &apos;./unit-conv&apos;
+import {messages, moduleNames} from &apos;./cansat-strings&apos; // eslint-disable-line import/named
+
+/**
+ * The parser for Team Icarus&apos; CanSat.
+ */
+export default class IcarusParser extends Parser {
+	/**
+	 * Implementation of {@link Parser#parse}.
+	 * Automatically decodes the quasi-binary packet with {@link decode}.
+	 * Supports telemetry, info and settings packets.
+	 * Also converts sensor values to standard units and attaches text representations
+	 * of module names and messages.
+	 * @param {Buffer} rawPacket Packet to parse.
+	 * @returns {Object} Parsed packet.
+	 */
+	parse(rawPacket) {
+		// Decode packet
+		this._raw = Buffer.from(rawPacket.toString(), &apos;base64&apos;)
+
+		// Parser needs to cleanup some things
+		super.parse(this._raw)
+
+		// Save raw packet (encoded version)
+		this.packet.raw = rawPacket.toJSON().data
+
+		// Save receival time
+		this.packet.receivedAt = Date.now()
+
+		try {
+			// Stop right now if there are no checksums
+			if (!this.packet.crc) {
+				throw new Error(&apos;Missing CRC checksums&apos;)
+			}
+
+			// Get packet type identifier
+			this.readChar(&apos;type&apos;)
+
+			// Only handle known packets
+			if (this.packet.type === &apos;t&apos; || this.packet.type === &apos;i&apos; || this.packet.type === &apos;s&apos;) {
+				// Now the packet counter, timestamps and alike
+				this.readUInt(&apos;counter&apos;, 4)
+				this.readUInt(&apos;sentAt.millis&apos;, 4)
+				this.readUInt(&apos;sentAt.unix&apos;, 4) // Not yet as of now
+
+				// Generate the packet ID
+				this.packet._id = String(this.packet.counter)
+			}
+
+			switch (this.packet.type) {
+				case &apos;t&apos;:
+					// Temperature
+					this.readInt(&apos;temp.0&apos;, 2, conv.DS18B20)
+					this.readInt(&apos;temp.1&apos;, 2, conv.DS18B20)
+
+					// Pressure
+					this.readInt(&apos;press.0&apos;, 2, conv.MPX4115A)
+					this.readInt(&apos;press.1&apos;, 2, conv.MPX4115A)
+
+					// GPS data
+					this.readUInt(&apos;gps.flags&apos;, 1, conv.gpsFlags)
+
+					// GPS Latitude
+					this.readUInt(&apos;gps.lat.deg&apos;, 2)
+					this.readUInt(&apos;gps.lat.billionths&apos;, 4)
+					this.setValue(&apos;gps.lat&apos;, this.packet.gps.lat, conv.gpsCoordinate)
+					if (this.packet.gps.flags.latSign) {
+						// The sign bit is true = the value the negative
+						this.packet.gps.lat *= -1
+					}
+
+					// GPS Longitude
+					this.readUInt(&apos;gps.lng.deg&apos;, 2)
+					this.readUInt(&apos;gps.lng.billionths&apos;, 4)
+					this.setValue(&apos;gps.lng&apos;, this.packet.gps.lng, conv.gpsCoordinate)
+					if (this.packet.gps.flags.lngSign) {
+						// The sign bit is true = the value the negative
+						this.packet.gps.lng *= -1
+					}
+
+					this.readInt(&apos;gps.speed&apos;, 4, conv.gpsSpeed)
+					this.readInt(&apos;gps.course&apos;, 4, conv.gpsCourse)
+					this.readInt(&apos;gps.altitude&apos;, 4, conv.gpsAltitude)
+
+				// Acceleration
+					this.readInt(&apos;accel.0.x&apos;, 2, conv.LIS331HH_24G)
+					this.readInt(&apos;accel.0.y&apos;, 2, conv.LIS331HH_24G)
+					this.readInt(&apos;accel.0.z&apos;, 2, conv.LIS331HH_24G)
+					this.readInt(&apos;accel.1.x&apos;, 2, conv.MMA7361_6G)
+					this.readInt(&apos;accel.1.y&apos;, 2, conv.MMA7361_6G)
+					this.readInt(&apos;accel.1.z&apos;, 2, conv.MMA7361_6G)
+					break
+				case &apos;i&apos;:
+					// Message code and interpretation
+					this.readUInt(&apos;message.id&apos;)
+					this.setValue(&apos;message.text&apos;, messages[this.packet.message.id] || &apos;Unknown message&apos;)
+					break
+				case &apos;s&apos;:
+					// Module information
+					this.readUInt(&apos;module.id&apos;)
+					this.readBoolean(&apos;module.enable&apos;)
+					this.readUInt(&apos;module.interval&apos;, 4)
+					this.readUInt(&apos;module.lastRun&apos;, 4)
+
+					// Get module name
+					this.setValue(&apos;module.name&apos;, moduleNames[this.packet.module.id] || &apos;Unknown module&apos;)
+					break
+				default:
+					this.packet.type = `?[0x${this.packet.type.charCodeAt(0).toString(16)}]`
+					break
+			}
+		} catch (err) {
+			// When we can&apos;t decode it, we can&apos;t continue
+			this.packet.error = err.message
+
+			this.packet.type = &apos;?[error]&apos;
+		}
+
+		return this.packet
+	}
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

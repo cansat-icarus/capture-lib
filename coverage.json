@@ -1,0 +1,100 @@
+{
+  "coverage": "91.81%",
+  "expectCount": 110,
+  "actualCount": 101,
+  "files": {
+    "src/icarus/backend/index.js": {
+      "expectCount": 12,
+      "actualCount": 12,
+      "undocumentLines": []
+    },
+    "src/icarus/classifier/index.js": {
+      "expectCount": 7,
+      "actualCount": 7,
+      "undocumentLines": []
+    },
+    "src/icarus/data-handler/unit-conv.js": {
+      "expectCount": 11,
+      "actualCount": 5,
+      "undocumentLines": [
+        40,
+        46,
+        9,
+        93,
+        88,
+        83
+      ]
+    },
+    "src/lib/backoff-wrapper.js": {
+      "expectCount": 8,
+      "actualCount": 8,
+      "undocumentLines": []
+    },
+    "src/icarus/data-handler/parser.js": {
+      "expectCount": 3,
+      "actualCount": 2,
+      "undocumentLines": [
+        20
+      ]
+    },
+    "src/parser.js": {
+      "expectCount": 13,
+      "actualCount": 13,
+      "undocumentLines": []
+    },
+    "src/icarus/backend/replicator.js": {
+      "expectCount": 15,
+      "actualCount": 14,
+      "undocumentLines": [
+        86
+      ]
+    },
+    "src/serial.js": {
+      "expectCount": 15,
+      "actualCount": 15,
+      "undocumentLines": []
+    },
+    "src/icarus/station.js": {
+      "expectCount": 13,
+      "actualCount": 13,
+      "undocumentLines": []
+    },
+    "src/lib/log.js": {
+      "expectCount": 1,
+      "actualCount": 1,
+      "undocumentLines": []
+    },
+    "src/icarus/data-handler/index.js": {
+      "expectCount": 3,
+      "actualCount": 3,
+      "undocumentLines": []
+    },
+    "src/lib/db.js": {
+      "expectCount": 2,
+      "actualCount": 2,
+      "undocumentLines": []
+    },
+    "src/icarus/data-handler/cansat-strings.js": {
+      "expectCount": 2,
+      "actualCount": 2,
+      "undocumentLines": []
+    },
+    "src/icarus/classifier/packet-heuristics.js": {
+      "expectCount": 2,
+      "actualCount": 2,
+      "undocumentLines": []
+    },
+    "src/lib/path.js": {
+      "expectCount": 2,
+      "actualCount": 1,
+      "undocumentLines": [
+        12
+      ]
+    },
+    "src/lib/pass-event.js": {
+      "expectCount": 1,
+      "actualCount": 1,
+      "undocumentLines": []
+    }
+  }
+}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../../">
+  <title data-ice="title">src/icarus/classifier/index.js | CanSat Groundstation Library API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/cansat-icarus/capture-lib.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/serial.js~Serial.html">Serial</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-listPorts">listPorts</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/station.js~Station.html">Station</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tMinusPid">tMinusPid</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tMinusVid">tMinusVid</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/backend</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/backend/index.js~Backend.html">Backend</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/backend/replicator.js~Replicator.html">Replicator</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/classifier</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/classifier/index.js~Classifier.html">Classifier</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-minmaxH">minmaxH</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-variationH">variationH</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/data-handler</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/data-handler/parser.js~IcarusParser.html">IcarusParser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-dataHandler">dataHandler</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parser">parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-DS18B20">DS18B20</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-LIS331HH_24G">LIS331HH_24G</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-MMA7361_6G">MMA7361_6G</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-MPX4115A">MPX4115A</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-analogToMV">analogToMV</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getBit">getBit</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsAltitude">gpsAltitude</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsCoordinate">gpsCoordinate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsCourse">gpsCourse</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsFlags">gpsFlags</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsSpeed">gpsSpeed</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-messages">messages</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-moduleNames">moduleNames</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tmBuffer">tmBuffer</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">lib</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/lib/backoff-wrapper.js~ExponentialBackoff.html">ExponentialBackoff</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getDB">getDB</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getRemoteDB">getRemoteDB</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-createLogger">createLogger</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-passEvent">passEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-normalizePath">normalizePath</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-pathPrefix">pathPrefix</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/icarus/classifier/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import {EventEmitter} from &apos;events&apos;
+import {get} from &apos;object-path&apos;
+
+import packetHeuristicsConfig from &apos;./packet-heuristics&apos;
+
+/**
+ * Calculates packet and station scores.
+ * Not an AI classifier.
+ * Packet scores are calculated based on the CRC checksum(60%)
+ * and simple heuristics(min/max value, variation between packets)(40%).
+ * The heuristics used are configured in the packet-heuristics.js map.
+ * Station scores are calculated based on the average packet score. The weight of
+ * each packet score is determined by the racional function 1/2x where x is a
+ * positive non-zero integer that represents how recent the packet is (1 being the
+ * most recent packet).
+ */
+export default class Classifier extends EventEmitter {
+	/**
+	 * Constructor.
+	 * @param {Bunyan} logger Logger instance.
+	 */
+	constructor(logger) {
+		super()
+
+		/**
+		 * The station score.
+		 * @type {!Number}
+		 */
+		this.stationScore = undefined
+
+		/**
+		 * The last data received (all packets merge in here).
+		 * Used for heuristic algorithms.
+		 * @type {Object}
+		 */
+		this._lastData = Object.create(null)
+
+		/**
+		 * Logger instance.
+		 * @type {Bunyan}
+		 */
+		this._log = logger
+
+		this._log.info(&apos;classifier.construct&apos;)
+		this._log.debug(&apos;classifier config&apos;, {packetHeuristicsConfig})
+	}
+
+	/**
+	 * Classifies one packet and updates the station score (unless told otherwise).
+	 * Packet scores are calculated based on the CRC checksum(60%)
+	 * and simple heuristics(min/max value, variation between packets)(40%).
+	 * @param {Object} packet The packet to classify.
+	 * @param {Boolean} [updateStationClassification=true] Whether to update the station score.
+	 * @emits stationScore(stationScore): when updateStationClassification is true, the station score is updated and the event is fired.
+	 * @returns {Number} Packet score.
+	 */
+	classifyPacket(packet, updateStationClassification = true) {
+		this._log.info(&apos;classifier.classifyPacket&apos;, {updateStationClassification})
+		this._log.debug(&apos;classifier.classifyPacket&apos;, {packet})
+		let score = 0
+
+		// Iterate and run each heuristic
+		let heuristicCount = 0
+		for (const [fields, heuristics] of packetHeuristicsConfig) {
+			for (const field of fields) {
+				// Get field current value
+				const val = get(packet, field)
+
+				// When there is no value, the field does not exist =&gt; wrong kind of packet.
+				if (val === undefined) {
+					this._log.debug(&apos;no value, skipping heuristics for&apos;, field, {val})
+					continue
+				}
+
+				// Get last values
+				const lastVal = get(this._lastData, field, val)
+
+				for (const heuristic of heuristics) {
+					heuristicCount++
+					this._log.trace(&apos;Running heuristic&apos;, heuristic.name)
+					score += heuristic(val, lastVal)
+				}
+			}
+		}
+
+		// Bump score to a 0-40 range
+		score *= 40 / heuristicCount
+
+		// The CRC accounts for 60% of the score, unless there are no heuristics
+		if (packet.crc.sent === packet.crc.local) {
+			if (score === Infinity || score === -Infinity || isNaN(score)) {
+				score = 100
+			} else {
+				score += 60
+			}
+		} else if (score === Infinity || score === -Infinity || isNaN(score)) {
+			score = 0
+		}
+
+		// Update station classification
+		if (updateStationClassification) {
+			this.classifyStationInc(score)
+		}
+
+		// Update _lastData with the current packet fields
+		Object.assign(this._lastData, packet)
+
+		return score
+	}
+
+	/**
+	 * Updates the station score(incrementally).
+	 * Station scores are calculated based on the average packet score. The weight of
+	 * each packet score is determined by the racional function 1/2x where x is a
+	 * positive non-zero integer that represents how recent the packet is (1 being the
+	 * most recent packet).
+	 * @param {Number} packetScore The score of the previously unnacounted packet.
+	 * @returns {Number} New station score.
+	 * @emits stationScore(stationScore): because the station score was updated.
+	 */
+	classifyStationInc(packetScore) {
+		if (this.stationScore === undefined) {
+			this.stationScore = packetScore
+		} else {
+			this.stationScore += packetScore
+			this.stationScore /= 2
+		}
+
+		// Warn about the change
+		this.emit(&apos;stationScore&apos;, this.stationScore)
+
+		return this.stationScore
+	}
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../../">
+  <title data-ice="title">src/icarus/data-handler/index.js | CanSat Groundstation Library API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/cansat-icarus/capture-lib.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/serial.js~Serial.html">Serial</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-listPorts">listPorts</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/station.js~Station.html">Station</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tMinusPid">tMinusPid</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tMinusVid">tMinusVid</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/backend</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/backend/index.js~Backend.html">Backend</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/backend/replicator.js~Replicator.html">Replicator</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/classifier</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/classifier/index.js~Classifier.html">Classifier</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-minmaxH">minmaxH</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-variationH">variationH</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">icarus/data-handler</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/icarus/data-handler/parser.js~IcarusParser.html">IcarusParser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-dataHandler">dataHandler</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-parser">parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-DS18B20">DS18B20</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-LIS331HH_24G">LIS331HH_24G</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-MMA7361_6G">MMA7361_6G</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-MPX4115A">MPX4115A</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-analogToMV">analogToMV</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getBit">getBit</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsAltitude">gpsAltitude</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsCoordinate">gpsCoordinate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsCourse">gpsCourse</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsFlags">gpsFlags</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-gpsSpeed">gpsSpeed</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-messages">messages</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-moduleNames">moduleNames</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-tmBuffer">tmBuffer</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">lib</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/lib/backoff-wrapper.js~ExponentialBackoff.html">ExponentialBackoff</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getDB">getDB</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getRemoteDB">getRemoteDB</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-createLogger">createLogger</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-passEvent">passEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-normalizePath">normalizePath</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-pathPrefix">pathPrefix</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/icarus/data-handler/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import {v4 as uuid} from &apos;uuid&apos;
+
+import IcarusParser from &apos;./parser&apos;
+
+/**
+ * &apos;Transceiver MODE&apos; Buffer for future comparison.
+ * Helps ignoring messages from transceiver.
+ * @private
+ * @type {Buffer}
+ */
+// TODO: check with the CanSat on: is this what we receive?
+const tmBuffer = Buffer.from(&apos;Transceiver MODE&apos;)
+
+/**
+ * Creates and returns a &quot;byteDelimiter&quot; parser.
+ * DISCLAIMER: It&apos;s a patched version of node-serialport&apos;s byteDelimiter parser.
+ * You can find it&apos;s source here: https://github.com/EmergingTechnologyAdvisors/node-serialport/tree/master/lib/parsers.js
+ * Changes from the original: trailing delimiters are removed, buffer passes through packetParser.parse before being emitted
+ * and empty buffers and &apos;Transceiver MODE&apos; messages are ignored.
+ * Separates packets by a byte delimiter and passes them through {@link packetParser}
+ * @returns {Function} The parser itself
+ */
+/*
+LICENSE OF THE ORIGINAL &quot;byteDelimiter&quot; parser:
+
+Copyright 2010, 2011, 2012 Christopher Williams. All rights reserved.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+*/
+export function parser() {
+	const delimiter = [13, 10] // \r\n
+	let buf = []
+	let nextDelimIndex = 0
+
+	return (emitter, buffer) =&gt; {
+		for (let i = 0; i &lt; buffer.length; i++) {
+			buf[buf.length] = buffer[i]
+
+			if (buf[buf.length - 1] === delimiter[nextDelimIndex]) {
+				nextDelimIndex++
+			}
+
+			if (nextDelimIndex === delimiter.length) {
+				// Remove trailing 254, 255 and ignore empty packets/&apos;Transceiver MODE&apos;
+				// Spare the parser the trouble, packets are always at least 6 bytes
+				if (buf.length &gt;= 8 &amp;&amp; !Buffer.from(buf).equals(tmBuffer)) {
+					// Create one packetParser object per packet
+					// If this one crashes, the others have a chance.
+					// It shouldn&apos;t throw any exception, but sometimes weird things happen.
+					// Let us not forget Murphy&apos;s Law.
+					const packetParser = new IcarusParser()
+
+					emitter.emit(&apos;data&apos;, packetParser.parse(Buffer.from(buf.slice(0, buf.length - 2))))
+				}
+
+				buf = []
+				nextDelimIndex = 0
+			}
+		}
+	}
+}
+
+/**
+ * A handler for incoming {@link Serial#data}.
+ * Saves packets to the local database.
+ * Should be called bound to a {@link Station}.
+ * @param {Object} packet Packet to be parsed and saved.
+ * @return {Promise} Resolves when all is done.
+ */
+export function dataHandler(packet) {
+	// Properly handle bad packets
+	if (packet.type.length === 1 &amp;&amp; packet.type !== &apos;?&apos;) {
+		// Assign packet score
+		packet.score = this.classifier.classifyPacket(packet)
+	} else {
+		// Bad packets have score 0
+		packet.score = 0
+		this.classifier.classifyStationInc(0)
+
+		// Generate a mostly random id
+		packet._id = `?${packet.receivedAt}-${uuid()}`
+	}
+
+	// Alert UI through station
+	this.emit(&apos;packet&apos;, packet)
+
+	// Save to DB
+	return this.db.put(packet)
+		.then(() =&gt; this._log.trace(&apos;packet saved&apos;, {packet}))
+		.catch(err =&gt; this._log.error(err))
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
