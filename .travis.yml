@@ -5,6 +5,7 @@ node_js:
   - v7 # Current
   - v6 # LTS
 # - v4 # Maintentance, not used by our version of Electron
+  - 10
 
 # Native module support
 # We need a C++11 compiler
