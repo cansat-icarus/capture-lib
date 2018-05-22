@@ -65,7 +65,7 @@
     "eslint-plugin-babel": "^4.1.1",
     "eslint-plugin-json": "^1.2.0",
     "jsverify": "^0.8.2",
-    "memdown": "^1.2.0",
+    "memdown": "^3.0.0",
     "mkdirp": "^0.5.1",
     "nodemon": "^1.10.2",
     "nyc": "^10.3.0",
