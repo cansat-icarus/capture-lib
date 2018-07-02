@@ -47,7 +47,7 @@
     "ava": "^0.19.1",
     "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
-    "babel-plugin-add-module-exports": "^0.2.0",
+    "babel-plugin-add-module-exports": "^0.3.1",
     "babel-plugin-rewire": "^1.1.0",
     "babel-plugin-syntax-export-extensions": "^6.13.0",
     "babel-plugin-syntax-function-bind": "^6.13.0",
