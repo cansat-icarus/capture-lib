@@ -44,7 +44,7 @@
     "uuid": "^3.0.1"
   },
   "devDependencies": {
-    "ava": "^0.19.1",
+    "ava": "^2.2.0",
     "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
     "babel-plugin-add-module-exports": "^0.2.0",
