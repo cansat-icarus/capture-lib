@@ -41,7 +41,7 @@
     "pouchdb": "^6.2.0",
     "serialport": "^4.0.1",
     "socket.io-client": "^2.0.0",
-    "uuid": "^3.0.1"
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "ava": "^0.19.1",
